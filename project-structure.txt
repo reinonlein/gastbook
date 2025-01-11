@@ -1,0 +1,23 @@
+lib/
+│
+├── main.dart            # Entry point of the app
+├── models/              # Data models
+│   └── user.dart        # User model
+│
+├── providers/           # State management using Provider
+│   └── auth_provider.dart
+│
+├── services/            # Firebase interaction services
+│   ├── auth_service.dart
+│   └── firestore_service.dart
+│
+├── screens/             # UI screens
+│   ├── login_screen.dart
+│   ├── home_screen.dart
+│   └── profile_screen.dart
+│
+├── widgets/             # Reusable widgets
+│   └── custom_button.dart
+│
+└── utils/               # Utilities like themes or constants
+    └── constants.dart

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "952191357393",
+    "project_id": "gastbook-app",
+    "storage_bucket": "gastbook-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:952191357393:android:15f12442fd846ceb1d90f0",
+        "android_client_info": {
+          "package_name": "com.gastbook.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDc62APWCWUYqAE2JzWurGgOZOR1XLsk4U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
