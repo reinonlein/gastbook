@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:gastbook/screens/login_screen.dart';
-import 'package:gastbook/screens/profile_screen.dart';
+import 'package:gastbook/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/sidebar.dart'; // Zorg ervoor dat je de juiste sidebar import hebt
@@ -50,30 +49,6 @@ class _FeedScreenState extends State<FeedScreen> {
     }
   }
 
-  void _navigateWithoutAnimation(BuildContext context, Widget page) {
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => page,
-        transitionDuration: Duration.zero, // Geen overgangsduur
-        reverseTransitionDuration: Duration.zero, // Geen overgangsduur bij teruggaan
-      ),
-    );
-  }
-
-  void _logout(BuildContext context) async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    await authProvider.signOut();
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const LoginScreen(),
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -90,7 +65,9 @@ class _FeedScreenState extends State<FeedScreen> {
       // AppBar wordt alleen weergegeven als het scherm kleiner is dan 600px
       appBar: screenWidth < 600
           ? AppBar(
-              title: const Text("Feed"),
+              title: const Text("Gastbook"),
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Colors.white,
               leading: IconButton(
                 icon: const Icon(Icons.menu),
                 onPressed: () {
@@ -101,46 +78,7 @@ class _FeedScreenState extends State<FeedScreen> {
             )
           : null, // Geen AppBar op grotere schermen
       // De Drawer die verschijnt op kleinere schermen
-      drawer: screenWidth < 600
-          ? Drawer(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: <Widget>[
-                  DrawerHeader(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    child: Text(
-                      'Gastbook',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                      ),
-                    ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.home),
-                    title: const Text('Feed'),
-                    onTap: () {
-                      _navigateWithoutAnimation(context, const FeedScreen());
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.person),
-                    title: const Text('Profile'),
-                    onTap: () {
-                      _navigateWithoutAnimation(context, const ProfileScreen());
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.logout),
-                    title: const Text('Logout'),
-                    onTap: () => _logout(context),
-                  ),
-                ],
-              ),
-            )
-          : null, // Geen Drawer op grotere schermen
+      drawer: screenWidth < 600 ? const CustomDrawer() : null, // Geen Drawer op grotere schermen
       // De body layout
       body: Row(
         children: [
