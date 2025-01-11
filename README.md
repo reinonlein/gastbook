@@ -1,6 +1,6 @@
 # gastbook
 
-A new Flutter project.
+A new Flutter Social Media Platform! Awesomeness galore.
 
 ## Getting Started
 
