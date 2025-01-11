@@ -22,56 +22,84 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Register')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _displayNameController,
-              decoration: const InputDecoration(labelText: 'Display Name'),
-            ),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password'),
-            ),
-            const SizedBox(height: 16),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: () async {
-                      setState(() {
-                        _isLoading = true;
-                      });
-                      try {
-                        await authProvider.registerUser(
-                          _emailController.text.trim(),
-                          _passwordController.text.trim(),
-                          _displayNameController.text.trim(),
-                        );
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const FeedScreen(),
-                          ),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString())),
-                        );
-                      } finally {
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      }
-                    },
-                    child: const Text('Register'),
-                  ),
-          ],
+      body: Align(
+        alignment: Alignment
+            .topCenter, // Plaatst het formulier naar boven, maar in het midden van het scherm
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: 16.0, vertical: 150.0), // Verhoog verticale padding
+          child: Column(
+            mainAxisSize:
+                MainAxisSize.min, // Zorgt ervoor dat de column niet meer ruimte gebruikt dan nodig
+            children: [
+              // Display Name TextField met een vaste breedte
+              Container(
+                width: 300, // Vaste breedte van 300 pixels
+                child: TextField(
+                  controller: _displayNameController,
+                  decoration: const InputDecoration(labelText: 'Display Name'),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Email TextField met een vaste breedte
+              Container(
+                width: 300, // Vaste breedte van 300 pixels
+                child: TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Password TextField met een vaste breedte
+              Container(
+                width: 300, // Vaste breedte van 300 pixels
+                child: TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Loading indicator of de registratieknop
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : SizedBox(
+                      width: 300, // Knop ook met vaste breedte van 300 pixels
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          try {
+                            await authProvider.registerUser(
+                              _emailController.text.trim(),
+                              _passwordController.text.trim(),
+                              _displayNameController.text.trim(),
+                            );
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FeedScreen(),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.toString())),
+                            );
+                          } finally {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        },
+                        child: const Text('Register'),
+                      ),
+                    ),
+            ],
+          ),
         ),
       ),
     );
