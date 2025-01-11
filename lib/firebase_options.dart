@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'gastbook-app.firebasestorage.app',
     measurementId: 'G-Y2V4TBKSNP',
   );
+
 }
