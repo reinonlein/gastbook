@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gastbook/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../widgets/sidebar.dart'; // Zorg ervoor dat je de juiste sidebar import hebt
+import '../widgets/sidebar.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({Key? key}) : super(key: key);
@@ -15,10 +15,10 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> {
   final TextEditingController _postController = TextEditingController();
   bool _isLoading = false;
-  bool _showOwnPostsOnly = false; // Nieuwe variabele voor het filteren van berichten
+  bool _showOwnPostsOnly = false;
 
   // Functie om een nieuwe post toe te voegen
-  Future<void> _addPost() async {
+  Future<void> _addPost(BuildContext bottomSheetContext) async {
     if (_postController.text.isEmpty) return;
 
     setState(() {
@@ -38,6 +38,9 @@ class _FeedScreenState extends State<FeedScreen> {
       });
 
       _postController.clear(); // Maak het invoerveld leeg na het posten
+
+      // Sluit de BottomSheet na het posten
+      Navigator.pop(bottomSheetContext); // Sluit de BottomSheet
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error adding post: $e')),
@@ -47,6 +50,43 @@ class _FeedScreenState extends State<FeedScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  // BottomSheet openen
+  void _openPostBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[50],
+      builder: (BuildContext bottomSheetContext) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              TextField(
+                controller: _postController,
+                decoration: const InputDecoration(
+                  hintText: 'What\'s on your mind?',
+                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 8),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: () => _addPost(bottomSheetContext),
+                      child: const Text('Post'),
+                    ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -60,9 +100,9 @@ class _FeedScreenState extends State<FeedScreen> {
     final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
     return Scaffold(
-      // Voeg de GlobalKey toe aan de Scaffold
       key: _scaffoldKey,
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       appBar: screenWidth < 600
           ? AppBar(
               title: const Text("Gastbook"),
@@ -71,42 +111,21 @@ class _FeedScreenState extends State<FeedScreen> {
               leading: IconButton(
                 icon: const Icon(Icons.menu),
                 onPressed: () {
-                  // Gebruik de GlobalKey om de Drawer te openen
                   _scaffoldKey.currentState?.openDrawer();
                 },
               ),
             )
-          : null, // Geen AppBar op grotere schermen
-      // De Drawer die verschijnt op kleinere schermen
-      drawer: screenWidth < 600 ? const CustomDrawer() : null, // Geen Drawer op grotere schermen
-      // De body layout
+          : null,
+      drawer: screenWidth < 600 ? const CustomDrawer() : null,
       body: Row(
         children: [
-          if (screenWidth >= 600) const Sidebar(), // Sidebar alleen op grote schermen
+          if (screenWidth >= 600) const Sidebar(),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Bericht plaatsen sectie
-                  TextField(
-                    controller: _postController,
-                    decoration: const InputDecoration(
-                      hintText: 'What\'s on your mind?',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 8),
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          onPressed: _addPost,
-                          child: const Text('Post'),
-                        ),
-                  const SizedBox(height: 16),
-
                   // Toggle voor "Alle berichten" of "Mijn berichten"
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -124,16 +143,12 @@ class _FeedScreenState extends State<FeedScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Berichten weergeven (alleen van de ingelogde gebruiker of van iedereen)
+                  // Berichten weergeven
                   Expanded(
                     child: StreamBuilder<QuerySnapshot>(
-                      // Voeg een filter toe voor de berichten van de ingelogde gebruiker
                       stream: FirebaseFirestore.instance
                           .collection('posts')
-                          .where('userId',
-                              isEqualTo: _showOwnPostsOnly
-                                  ? userId
-                                  : null) // Filter op userId wanneer nodig
+                          .where('userId', isEqualTo: _showOwnPostsOnly ? userId : null)
                           .orderBy('timestamp', descending: true)
                           .snapshots(),
                       builder: (context, snapshot) {
@@ -142,16 +157,13 @@ class _FeedScreenState extends State<FeedScreen> {
                         }
 
                         if (snapshot.hasError) {
-                          return Center(
-                            child: Text('Error: ${snapshot.error}'),
-                          );
+                          return Center(child: Text('Error: ${snapshot.error}'));
                         }
 
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                           return const Center(child: Text('No posts available.'));
                         }
 
-                        // Posts weergeven
                         final posts = snapshot.data!.docs;
                         return ListView.builder(
                           itemCount: posts.length,
@@ -181,6 +193,15 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
         ],
+      ),
+      // Action button onderaan het scherm
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openPostBottomSheet,
+        backgroundColor: Theme.of(context).primaryColor,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
       ),
     );
   }
