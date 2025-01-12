@@ -11,7 +11,10 @@ echo "Cloning Flutter repository..."
 git clone --depth 1 --branch stable https://github.com/flutter/flutter.git /usr/local/flutter
 
 # 2. Voeg Flutter toe aan het PATH
+echo "Adding Flutter to PATH..."
 export PATH="$PATH:/usr/local/flutter/bin"
+echo 'export PATH="$PATH:/usr/local/flutter/bin"' >> ~/.bashrc
+echo 'export PATH="$PATH:/usr/local/flutter/bin"' >> ~/.profile
 
 # 3. Update Flutter dependencies
 echo "Running 'flutter doctor' to download dependencies..."
