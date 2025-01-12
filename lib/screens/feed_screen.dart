@@ -4,6 +4,7 @@ import 'package:gastbook/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/sidebar.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({Key? key}) : super(key: key);
@@ -177,7 +178,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                 subtitle: Text(post['text']),
                                 trailing: Text(
                                   post['timestamp'] != null
-                                      ? (post['timestamp'] as Timestamp).toDate().toString()
+                                      ? timeago.format((post['timestamp'] as Timestamp).toDate())
                                       : 'Unknown time',
                                   style: const TextStyle(fontSize: 12),
                                 ),
