@@ -1,0 +1,10 @@
+{
+    "build": {
+        "env": {
+            "FLUTTER_HOME": "/usr/local/flutter"
+        },
+        "installCommand": "bash install_flutter.sh",
+        "buildCommand": "flutter build web"
+    },
+    "outputDirectory": "build/web"
+}
