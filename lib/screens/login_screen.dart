@@ -21,7 +21,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(
+        title: const Text('Login'),
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: Colors.grey[50],
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 150.0),
         child: Column(

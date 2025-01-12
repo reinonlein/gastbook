@@ -62,7 +62,7 @@ class _FeedScreenState extends State<FeedScreen> {
     return Scaffold(
       // Voeg de GlobalKey toe aan de Scaffold
       key: _scaffoldKey,
-      // AppBar wordt alleen weergegeven als het scherm kleiner is dan 600px
+      backgroundColor: Colors.white,
       appBar: screenWidth < 600
           ? AppBar(
               title: const Text("Gastbook"),
@@ -159,6 +159,7 @@ class _FeedScreenState extends State<FeedScreen> {
                             final post = posts[index];
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 8),
+                              color: Colors.grey[50],
                               child: ListTile(
                                 title: Text(post['userName']),
                                 subtitle: Text(post['text']),

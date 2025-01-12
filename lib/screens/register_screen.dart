@@ -21,7 +21,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
+      appBar: AppBar(
+        title: const Text('Register'),
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+      ),
       body: Align(
         alignment: Alignment
             .topCenter, // Plaatst het formulier naar boven, maar in het midden van het scherm
