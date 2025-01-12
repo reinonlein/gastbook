@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:gastbook/providers/post_provider.dart';
 import 'package:gastbook/screens/login_screen.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,18 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+
+  // log a test event
+  await analytics.logEvent(
+    name: 'app_start_test_event',
+    parameters: {
+      'app_version': '1.0.0',
+      'name': 'Gast!',
+    },
+  );
+
   runApp(const MyApp());
 }
 
