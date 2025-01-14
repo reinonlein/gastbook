@@ -7,7 +7,7 @@ users (collectie)
   - bio: string
   - profileImage: string
   - interests: array<string>
-  - friends: map<string, map>  // key: userId, value: map met 'fullName', 'profileImage' en 'status'
+  - friends: map<string, map>  // key: userId, value: map met 'fullName', 'profileImage' en 'status' ('friends', 'pending', 'requested')
   - createdAt: timestamp
   - birthDate: timestamp
 

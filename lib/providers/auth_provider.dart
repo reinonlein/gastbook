@@ -16,13 +16,22 @@ class AuthProvider with ChangeNotifier {
     _auth.authStateChanges().listen(_onAuthStateChanged);
   }
 
+  // Initialize de gebruiker bij het opstarten van de app
+  Future<void> init() async {
+    _user = _auth.currentUser; // Check of er een actieve gebruiker is
+    if (_user != null) {
+      await _fetchUserData(); // Haal gebruikersdata op als er een actieve gebruiker is
+    }
+    notifyListeners();
+  }
+
   // Methode om de status van de gebruiker bij te werken
   Future<void> _onAuthStateChanged(User? user) async {
     _user = user;
     if (_user != null) {
-      await _fetchUserData();
+      await _fetchUserData(); // Haal de gegevens op bij inloggen
     } else {
-      _userData = null;
+      _userData = null; // Zet de gegevens naar null bij uitloggen
     }
     notifyListeners();
   }
@@ -47,7 +56,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
-      await _fetchUserData();
+      await _fetchUserData(); // Haal de gebruikersdata na succesvol inloggen
     } catch (e) {
       throw Exception('Failed to sign in: $e');
     }
@@ -106,6 +115,4 @@ class AuthProvider with ChangeNotifier {
       throw Exception('Failed to send password reset email: $e');
     }
   }
-
-  // Profielfoto-updates en andere gebruikersgegevens kunnen later worden toegevoegd
 }
