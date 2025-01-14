@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:gastbook/providers/post_provider.dart';
 import 'package:gastbook/screens/login_screen.dart';
+import 'package:gastbook/screens/feed_screen.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'firebase_options.dart';
@@ -38,15 +39,39 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()..init()), // Roep init aan hier
+        ChangeNotifierProvider(create: (_) => AuthProvider()..init()), // AuthProvider met init
         ChangeNotifierProvider(create: (_) => PostProvider()),
       ],
       child: MaterialApp(
         title: 'Gastbook',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(primarySwatch: Colors.blue),
-        home: const LoginScreen(),
+        home: const AuthWrapper(), // Gebruik de AuthWrapper hier
       ),
     );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    // Controleer de laadstatus en toon een laadscherm
+    if (authProvider.isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Toon FeedScreen als de gebruiker is ingelogd, anders LoginScreen
+    if (authProvider.user != null) {
+      return const FeedScreen();
+    }
+    return const LoginScreen();
   }
 }
