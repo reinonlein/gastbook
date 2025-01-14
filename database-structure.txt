@@ -1,0 +1,64 @@
+users (collectie)
+- userId (document-ID)
+  - username: string
+  - fullName: string
+  - firstName: string
+  - lastName: string
+  - bio: string
+  - profileImage: string
+  - interests: array<string>
+  - friends: map<string, map>  // key: userId, value: map met 'fullName', 'profileImage' en 'status'
+  - createdAt: timestamp
+  - birthDate: timestamp
+
+usernames (collectie)
+- username (document-ID, altijd in kleine letters)
+  - userId: string
+
+posts (collectie)
+- postId (document-ID)
+  - authorId: string
+  - content: string
+  - likes: array<map>  // { userId: string, fullName: string, profileImage: string }
+  - commentsCount: number
+  - interestId: string | null
+  - visibility: string ('public' | 'friends' | 'interest')
+  - createdAt: timestamp
+  - comments: array<map>  // [{ commentId: string, authorId: string, fullName: string, profileImage: string, content: string, createdAt: timestamp }]
+  
+timelines (collectie)
+- timelineId (document-ID, userId of interestId)
+  - posts (subcollectie)
+    - postId (document-ID)
+      - createdAt: timestamp
+
+interests (collectie)
+- interestId (document-ID)
+  - name: string
+  - description: string
+  - createdAt: timestamp
+
+pages (collectie)
+- pageId (document-ID)
+  - name: string
+  - description: string
+  - profileImage: string
+  - bannerImage: string
+  - createdBy: string
+  - admins: array<string>
+  - followersCount: number
+  - createdAt: timestamp
+  - posts (subcollectie)
+    - postId (document-ID)
+      - authorId: string
+      - content: string
+      - likes: array<map>  // { userId: string, fullName: string, profileImage: string }
+      - commentsCount: number
+      - createdAt: timestamp
+      - comments: array<map>  // [{ commentId: string, authorId: string, fullName: string, profileImage: string, content: string, createdAt: timestamp }]
+
+followers (collectie)
+- followerId (document-ID, combinatie van userId en pageId)
+  - userId: string
+  - pageId: string
+  - followedAt: timestamp

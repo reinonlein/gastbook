@@ -6,6 +6,7 @@ import 'package:gastbook/screens/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,9 +14,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Zet de persistentie in op LOCAL, zodat gebruikers ingelogd blijven
+  await firebase_auth.FirebaseAuth.instance.setPersistence(firebase_auth.Persistence.LOCAL);
+
   FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
-  // log a test event
+  // Log een test event
   await analytics.logEvent(
     name: 'app_start_test_event',
     parameters: {
