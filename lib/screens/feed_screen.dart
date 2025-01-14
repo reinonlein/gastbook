@@ -102,7 +102,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       resizeToAvoidBottomInset: true,
       appBar: screenWidth < 600
           ? AppBar(
@@ -170,17 +170,66 @@ class _FeedScreenState extends State<FeedScreen> {
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
                             final post = posts[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              color: Colors.grey[50],
-                              child: ListTile(
-                                title: Text(post['userName']),
-                                subtitle: Text(post['text']),
-                                trailing: Text(
-                                  post['timestamp'] != null
-                                      ? timeago.format((post['timestamp'] as Timestamp).toDate())
-                                      : 'Unknown time',
-                                  style: const TextStyle(fontSize: 12),
+                            return Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 750,
+                                ),
+                                child: Card(
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  color: Colors.white,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(0.0),
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.fromLTRB(25, 12, 25, 10),
+                                      title: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 16,
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    post['userName'],
+                                                    style: TextStyle(
+                                                      color: Theme.of(context).primaryColor,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    post['timestamp'] != null
+                                                        ? timeago.format(
+                                                            (post['timestamp'] as Timestamp)
+                                                                .toDate())
+                                                        : 'Unknown time',
+                                                    style: const TextStyle(
+                                                        fontSize: 12, color: Colors.grey),
+                                                  ),
+                                                ],
+                                              )
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      subtitle: Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: Text(
+                                          post['text'],
+                                          style: TextStyle(fontSize: 15),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             );
