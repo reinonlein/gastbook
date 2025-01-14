@@ -123,7 +123,7 @@ class _FeedScreenState extends State<FeedScreen> {
           if (screenWidth >= 600) const Sidebar(),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
