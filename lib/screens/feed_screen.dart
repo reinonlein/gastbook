@@ -34,7 +34,7 @@ class _FeedScreenState extends State<FeedScreen> {
       await FirebaseFirestore.instance.collection('posts').add({
         'text': _postController.text.trim(),
         'userId': user!.uid,
-        'userName': authProvider.userData?['name'] ?? 'Anonymous',
+        'userName': authProvider.userData?['fullName'] ?? 'Anonymous',
         'timestamp': FieldValue.serverTimestamp(),
       });
 

@@ -66,39 +66,56 @@ class AuthProvider with ChangeNotifier {
   }
 
   /// Registratie van een nieuwe gebruiker
-  Future<void> registerUser(String email, String password, String displayName) async {
+  Future<void> registerUser({
+    required String email,
+    required String password,
+    required String userName,
+    required String firstName,
+    required String lastName,
+  }) async {
     try {
-      // Controleer of de displaynaam al bestaat
-      final existingDisplayName =
-          await _firestore.collection('displaynames').doc(displayName).get();
+      final existingUserName = await _firestore.collection('usernames').doc(userName).get();
 
-      if (existingDisplayName.exists) {
-        throw Exception('Display name already taken. Please choose another one.');
+      if (existingUserName.exists) {
+        throw Exception('Username already taken. Please choose another one.');
       }
 
-      // Maak de gebruiker aan in Firebase Auth
+      // Create user in Firebase Auth
       final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       final userId = result.user!.uid;
 
-      // Voeg de displaynaam toe aan de 'displaynames'-collectie
-      await _firestore.collection('displaynames').doc(displayName).set({
+      // Add username to 'usernames' collection
+      await _firestore.collection('usernames').doc(userName).set({
         'uid': userId,
       });
 
-      // Voeg de gebruiker toe aan de 'users'-collectie
+      // Concatenate firstName and lastName to fullName
+      final fullName = '$firstName $lastName';
+
+      // Add user to 'users' collection
       await _firestore.collection('users').doc(userId).set({
-        'name': displayName,
+        'username': userName,
+        'fullName': fullName,
+        'firstName': firstName,
+        'lastName': lastName,
+        'bio': '',
+        'profileImage': '',
+        'interests': [],
+        'friends': {},
+        'createdAt': Timestamp.now(),
+        'birthDate': null,
         'email': email,
-        'photoUrl': '',
       });
 
       _user = result.user;
       await _fetchUserData();
+    } on FirebaseAuthException catch (e) {
+      throw Exception(getFriendlyAuthErrorMessage(e));
     } catch (e) {
-      throw Exception('Failed to register: $e');
+      throw Exception('$e');
     }
   }
 
@@ -116,6 +133,25 @@ class AuthProvider with ChangeNotifier {
       await _auth.sendPasswordResetEmail(email: email);
     } catch (e) {
       throw Exception('Failed to send password reset email: $e');
+    }
+  }
+
+  String getFriendlyAuthErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return 'This email address is already in use. Please try logging in or use a different email address.';
+      case 'invalid-email':
+        return 'The email address you entered is invalid. Please check it and try again.';
+      case 'operation-not-allowed':
+        return 'Email/password registration is currently disabled. Please contact the administrator.';
+      case 'weak-password':
+        return 'The password is too weak. Please choose a stronger password with at least 6 characters.';
+      case 'user-disabled':
+        return 'This account has been disabled. Please contact support.';
+      case 'too-many-requests':
+        return 'Too many requests. Please try again later.';
+      default:
+        return e.message ?? 'Could not register with these credentials. Please try again.';
     }
   }
 }
