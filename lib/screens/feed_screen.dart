@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gastbook/screens/profile_screen.dart';
 import 'package:gastbook/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -198,12 +199,27 @@ class _FeedScreenState extends State<FeedScreen> {
                                               Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  Text(
-                                                    post['userName'],
-                                                    style: TextStyle(
-                                                      color: Theme.of(context).primaryColor,
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 14,
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      Navigator.push(
+                                                        context,
+                                                        PageRouteBuilder(
+                                                          pageBuilder: (_, __, ___) =>
+                                                              ProfileScreen(userId: post['userId']),
+                                                          transitionDuration:
+                                                              Duration.zero, // Geen overgangsduur
+                                                          reverseTransitionDuration: Duration
+                                                              .zero, // Geen overgangsduur bij teruggaan
+                                                        ),
+                                                      );
+                                                    },
+                                                    child: Text(
+                                                      post['userName'],
+                                                      style: TextStyle(
+                                                        color: Theme.of(context).primaryColor,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 14,
+                                                      ),
                                                     ),
                                                   ),
                                                   Text(
