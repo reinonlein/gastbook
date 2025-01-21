@@ -7,11 +7,20 @@ class PostProvider with ChangeNotifier {
 
   Stream<QuerySnapshot> get posts => _firestoreService.getPosts();
 
-  Future<void> addPost(String content, String userId) async {
+  Future<void> addPost(String content, String userId, String fullName) async {
     try {
-      await _firestoreService.addPost(content, userId);
+      await _firestoreService.addPost(content, userId, fullName);
     } catch (e) {
       throw Exception('Error adding post: $e');
+    }
+  }
+
+  Future<void> toggleLike(
+      String postId, String userId, String fullName, String profileImage) async {
+    try {
+      await _firestoreService.toggleLike(postId, userId, fullName, profileImage);
+    } catch (e) {
+      throw Exception('Error toggling like: $e');
     }
   }
 }

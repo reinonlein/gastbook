@@ -8,27 +8,22 @@ class AuthProvider with ChangeNotifier {
 
   User? _user;
   Map<String, dynamic>? _userData;
-  bool _isLoading = true; // Toegevoegd om laadstatus te beheren
+  bool _isLoading = true;
 
   User? get user => _user;
   Map<String, dynamic>? get userData => _userData;
   bool get isLoading => _isLoading;
 
   AuthProvider() {
-    // Automatisch luisteren naar authenticatiestatus
     _auth.authStateChanges().listen(_onAuthStateChanged);
   }
 
-  /// Initialiseer de authenticatiestatus
   Future<void> init() async {
-    // Wacht op de eerste authStateChange
     await _auth.authStateChanges().first;
-    // Zorg ervoor dat isLoading wordt bijgewerkt
     _isLoading = false;
     notifyListeners();
   }
 
-  /// Methode om de status van de gebruiker bij te werken
   Future<void> _onAuthStateChanged(User? user) async {
     _user = user;
     if (_user != null) {
@@ -39,7 +34,6 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Haal gebruikersdata op uit Firestore
   Future<void> _fetchUserData() async {
     if (_user == null) return;
     final doc = await _firestore.collection('users').doc(_user!.uid).get();
@@ -55,7 +49,6 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Inloggen met e-mail en wachtwoord
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
@@ -65,7 +58,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Registratie van een nieuwe gebruiker
   Future<void> registerUser({
     required String email,
     required String password,
@@ -80,22 +72,18 @@ class AuthProvider with ChangeNotifier {
         throw Exception('Username already taken. Please choose another one.');
       }
 
-      // Create user in Firebase Auth
       final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       final userId = result.user!.uid;
 
-      // Add username to 'usernames' collection
       await _firestore.collection('usernames').doc(userName).set({
         'uid': userId,
       });
 
-      // Concatenate firstName and lastName to fullName
       final fullName = '$firstName $lastName';
 
-      // Add user to 'users' collection
       await _firestore.collection('users').doc(userId).set({
         'username': userName,
         'fullName': fullName,
@@ -119,7 +107,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Uitloggen van de gebruiker
   Future<void> signOut() async {
     await _auth.signOut();
     _user = null;
@@ -127,7 +114,6 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Wachtwoord reset verzoek
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);

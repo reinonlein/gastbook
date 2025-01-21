@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:gastbook/screens/profile_screen.dart';
-import 'package:gastbook/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../widgets/sidebar.dart';
 import 'package:timeago/timeago.dart' as timeago;
+
+import '../providers/auth_provider.dart';
+import '../providers/post_provider.dart';
+import '../widgets/custom_drawer.dart';
+import '../widgets/sidebar.dart';
+import 'profile_screen.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({Key? key}) : super(key: key);
@@ -28,20 +30,15 @@ class _FeedScreenState extends State<FeedScreen> {
     });
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final user = authProvider.user;
+    final userId = authProvider.user?.uid;
+    final fullName = authProvider.userData?['fullName'];
 
     try {
-      // Voeg de post toe aan Firestore
-      await FirebaseFirestore.instance.collection('posts').add({
-        'text': _postController.text.trim(),
-        'userId': user!.uid,
-        'userName': authProvider.userData?['fullName'] ?? 'Anonymous',
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+      final postProvider = Provider.of<PostProvider>(context, listen: false);
+      await postProvider.addPost(_postController.text.trim(), userId!, fullName);
 
       _postController.clear(); // Maak het invoerveld leeg na het posten
 
-      // Sluit de BottomSheet na het posten
       Navigator.pop(bottomSheetContext); // Sluit de BottomSheet
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -94,11 +91,11 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final postProvider = Provider.of<PostProvider>(context);
     final userId = authProvider.user?.uid;
 
     double screenWidth = MediaQuery.of(context).size.width;
 
-    // Maak een GlobalKey voor de Scaffold
     final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
     return Scaffold(
@@ -128,7 +125,6 @@ class _FeedScreenState extends State<FeedScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Toggle voor "Alle berichten" of "Mijn berichten"
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -144,15 +140,15 @@ class _FeedScreenState extends State<FeedScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-
-                  // Berichten weergeven
                   Expanded(
                     child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('posts')
-                          .where('userId', isEqualTo: _showOwnPostsOnly ? userId : null)
-                          .orderBy('timestamp', descending: true)
-                          .snapshots(),
+                      stream: _showOwnPostsOnly
+                          ? FirebaseFirestore.instance
+                              .collection('posts')
+                              .where('userId', isEqualTo: userId)
+                              .orderBy('createdAt', descending: true)
+                              .snapshots()
+                          : postProvider.posts,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator());
@@ -170,30 +166,34 @@ class _FeedScreenState extends State<FeedScreen> {
                         return ListView.builder(
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
-                            final post = posts[index];
+                            // Maak een mutable Map van de post
+                            final postSnapshot = posts[index];
+                            final post = postSnapshot.data() as Map<String, dynamic>;
+                            post['id'] = postSnapshot.id;
+
+                            final isLiked = (post['likes'] as List<dynamic>)
+                                .any((like) => like['userId'] == userId);
+                            final likeCount = (post['likes'] as List<dynamic>).length;
+                            final commentCount = (post['comments'] as List<dynamic>).length;
+
                             return Center(
                               child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 750,
-                                ),
+                                constraints: const BoxConstraints(maxWidth: 750),
                                 child: Card(
                                   margin: const EdgeInsets.symmetric(vertical: 8),
                                   color: Colors.white,
                                   child: Padding(
                                     padding: const EdgeInsets.all(0.0),
                                     child: ListTile(
-                                      contentPadding: EdgeInsets.fromLTRB(25, 12, 25, 10),
+                                      contentPadding: const EdgeInsets.fromLTRB(25, 12, 25, 0),
                                       title: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             children: [
-                                              CircleAvatar(
+                                              const CircleAvatar(
                                                 radius: 16,
-                                                child: Icon(
-                                                  Icons.person,
-                                                  size: 18,
-                                                ),
+                                                child: Icon(Icons.person, size: 18),
                                               ),
                                               const SizedBox(width: 12),
                                               Column(
@@ -203,18 +203,15 @@ class _FeedScreenState extends State<FeedScreen> {
                                                     onTap: () {
                                                       Navigator.push(
                                                         context,
-                                                        PageRouteBuilder(
-                                                          pageBuilder: (_, __, ___) =>
-                                                              ProfileScreen(userId: post['userId']),
-                                                          transitionDuration:
-                                                              Duration.zero, // Geen overgangsduur
-                                                          reverseTransitionDuration: Duration
-                                                              .zero, // Geen overgangsduur bij teruggaan
+                                                        MaterialPageRoute(
+                                                          builder: (context) => ProfileScreen(
+                                                            userId: post['userId'],
+                                                          ),
                                                         ),
                                                       );
                                                     },
                                                     child: Text(
-                                                      post['userName'],
+                                                      post['fullName'],
                                                       style: TextStyle(
                                                         color: Theme.of(context).primaryColor,
                                                         fontWeight: FontWeight.bold,
@@ -223,9 +220,9 @@ class _FeedScreenState extends State<FeedScreen> {
                                                     ),
                                                   ),
                                                   Text(
-                                                    post['timestamp'] != null
+                                                    post['createdAt'] != null
                                                         ? timeago.format(
-                                                            (post['timestamp'] as Timestamp)
+                                                            (post['createdAt'] as Timestamp)
                                                                 .toDate())
                                                         : 'Unknown time',
                                                     style: const TextStyle(
@@ -237,12 +234,125 @@ class _FeedScreenState extends State<FeedScreen> {
                                           ),
                                         ],
                                       ),
-                                      subtitle: Padding(
-                                        padding: const EdgeInsets.only(top: 12),
-                                        child: Text(
-                                          post['text'],
-                                          style: TextStyle(fontSize: 15),
-                                        ),
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(0, 25, 0, 12),
+                                            child: Text(
+                                              post['content'],
+                                              style: const TextStyle(fontSize: 15),
+                                            ),
+                                          ),
+                                          Divider(
+                                            thickness: 0.7,
+                                            color: Colors.grey[200],
+                                          ),
+                                          Theme(
+                                            data: ThemeData(
+                                              dividerColor: Colors.transparent,
+                                              hoverColor: Colors.transparent,
+                                              splashColor: Colors.transparent,
+                                              highlightColor: Colors.transparent,
+                                            ),
+                                            child: ExpansionTile(
+                                              tilePadding: EdgeInsets.zero,
+                                              trailing: SizedBox(),
+                                              title: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                                children: [
+                                                  // Toon het aantal likes
+                                                  Row(
+                                                    children: [
+                                                      IconButton(
+                                                        icon: Icon(
+                                                          size: 17,
+                                                          isLiked
+                                                              ? Icons.favorite
+                                                              : Icons.favorite_border,
+                                                          color: isLiked ? Colors.red : Colors.grey,
+                                                        ),
+                                                        onPressed: () {
+                                                          postProvider.toggleLike(
+                                                            post['id'],
+                                                            userId!,
+                                                            authProvider.userData?['fullName'] ??
+                                                                '',
+                                                            authProvider
+                                                                    .userData?['profileImage'] ??
+                                                                '',
+                                                          );
+                                                        },
+                                                      ),
+                                                      Text(
+                                                        '$likeCount ${likeCount == 1 ? 'Like' : 'Likes'}',
+                                                        style: const TextStyle(
+                                                            fontSize: 12, color: Colors.grey),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Text(
+                                                    '$commentCount ${commentCount == 1 ? 'Comment' : 'Comments'}',
+                                                    style: const TextStyle(
+                                                        fontSize: 12, color: Colors.grey),
+                                                  ),
+                                                ],
+                                              ),
+                                              children: [
+                                                // Gebruik een Container om de commentaarlijst in te pakken
+                                                Container(
+                                                  padding: const EdgeInsets.all(8.0),
+                                                  child: Column(
+                                                    children: [
+                                                      // Maak een lijst van de reacties
+                                                      for (var comment in post['comments'])
+                                                        ListTile(
+                                                          title: Text(comment['text']),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          // MANIER OM SHOW MORE COMMENTS TOE TE PASSEN
+                                          // if (commentCount > 0)
+                                          //   ListTile(
+                                          //     title: Text(post['comments'][0]['text']),
+                                          //   ),
+                                          // if (commentCount > 1)
+                                          //   Theme(
+                                          //     data: ThemeData(
+                                          //       dividerColor: Colors.transparent,
+                                          //       hoverColor: Colors.transparent,
+                                          //     ),
+                                          //     child: ExpansionTile(
+                                          //       tilePadding: EdgeInsets.zero,
+                                          //       trailing: SizedBox(),
+                                          //       title: TextButton(
+                                          //         onPressed: null,
+                                          //         child: Text(
+                                          //             'Show ${commentCount - 1} more comments'),
+                                          //       ),
+                                          //       children: [
+                                          //         // Gebruik een Container om de commentaarlijst in te pakken
+                                          //         Container(
+                                          //           padding: const EdgeInsets.all(8.0),
+                                          //           child: Column(
+                                          //             children: [
+                                          //               // Maak een lijst van de reacties
+                                          //               for (var comment
+                                          //                   in post['comments'].skip(1))
+                                          //                 ListTile(
+                                          //                   title: Text(comment['text']),
+                                          //                 ),
+                                          //             ],
+                                          //           ),
+                                          //         ),
+                                          //       ],
+                                          //     ),
+                                          //   ),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -260,7 +370,6 @@ class _FeedScreenState extends State<FeedScreen> {
           ),
         ],
       ),
-      // Action button onderaan het scherm
       floatingActionButton: FloatingActionButton(
         onPressed: _openPostBottomSheet,
         backgroundColor: Theme.of(context).primaryColor,
