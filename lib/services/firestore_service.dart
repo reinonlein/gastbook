@@ -27,26 +27,57 @@ class FirestoreService {
     if (postDoc.exists) {
       final postData = postDoc.data() as Map<String, dynamic>;
 
-      List<Map<String, String>> likes = List<Map<String, String>>.from(postData['likes'] ?? []);
+      // Cast de likes lijst naar een List<Map<String, dynamic>>
+      List<Map<String, dynamic>> likes = List<Map<String, dynamic>>.from(postData['likes'] ?? []);
+
+      // Zorg ervoor dat je de juiste types gebruikt in de map
       final userIndex = likes.indexWhere((like) => like['userId'] == userId);
 
       if (userIndex == -1) {
-        // User has not liked the post, so we add the like
+        // Als de gebruiker nog niet heeft geliked, voeg de like toe
         likes.add({
           'userId': userId,
           'fullName': fullName,
           'profileImage': profileImage,
         });
       } else {
-        // User already liked the post, so we remove the like
+        // Als de gebruiker al heeft geliked, verwijder de like
         likes.removeAt(userIndex);
       }
 
+      // Update de likes in Firestore
       await postRef.update({
         'likes': likes,
       });
     } else {
       throw Exception('Post not found');
+    }
+  }
+
+  // Voeg een nieuwe comment toe aan de post
+  Future<void> addComment(String postId, Map<String, dynamic> newComment) async {
+    try {
+      // Haal de huidige post op
+      final postRef = _db.collection('posts').doc(postId);
+      final postSnapshot = await postRef.get();
+      if (!postSnapshot.exists) {
+        throw Exception('Post not found');
+      }
+
+      // Verkrijg de huidige comments lijst
+      List<Map<String, dynamic>> comments =
+          List<Map<String, dynamic>>.from(postSnapshot.data()?['comments'] ?? []);
+
+      // Voeg de nieuwe comment toe aan de lijst
+      comments.add(newComment);
+
+      // Update de post met de nieuwe lijst van comments
+      await postRef.update({
+        'comments': comments,
+        'commentsCount': FieldValue.increment(1),
+      });
+    } catch (e) {
+      throw Exception('Error adding comment: $e');
     }
   }
 }

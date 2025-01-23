@@ -18,6 +18,7 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   final TextEditingController _postController = TextEditingController();
+  final TextEditingController _commentController = TextEditingController();
   bool _isLoading = false;
 
   // Functie om een nieuwe post toe te voegen
@@ -36,7 +37,6 @@ class _FeedScreenState extends State<FeedScreen> {
       await postProvider.addPost(_postController.text.trim(), user!.id, user.fullName);
 
       _postController.clear(); // Maak het invoerveld leeg na het posten
-
       Navigator.pop(bottomSheetContext); // Sluit de BottomSheet
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -46,6 +46,30 @@ class _FeedScreenState extends State<FeedScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  // Functie om een comment toe te voegen
+  Future<void> _addComment(Post post) async {
+    if (_commentController.text.isEmpty) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+
+    try {
+      final postProvider = Provider.of<PostProvider>(context, listen: false);
+      await postProvider.addComment(
+        post.postId,
+        user!.id,
+        user.fullName,
+        '',
+        _commentController.text.trim(),
+      );
+      _commentController.clear(); // Maak het comment invoerveld leeg
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding comment: $e')),
+      );
     }
   }
 
@@ -93,7 +117,6 @@ class _FeedScreenState extends State<FeedScreen> {
     final user = authProvider.user;
 
     double screenWidth = MediaQuery.of(context).size.width;
-
     final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
     return Scaffold(
@@ -245,6 +268,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                                           color: isLiked ? Colors.red : Colors.grey,
                                                         ),
                                                         onPressed: () {
+                                                          print('klik');
                                                           postProvider.toggleLike(
                                                             post.postId,
                                                             user!.id,
@@ -313,7 +337,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                                                     ),
                                                                     const SizedBox(height: 4.0),
                                                                     Text(
-                                                                      comment['text'],
+                                                                      comment['content'],
                                                                       style: const TextStyle(
                                                                         fontSize: 14.0,
                                                                         color: Colors.black87,
@@ -353,17 +377,27 @@ class _FeedScreenState extends State<FeedScreen> {
                                                                       CrossAxisAlignment.start,
                                                                   children: [
                                                                     const SizedBox(height: 4.0),
-                                                                    Text(
-                                                                      'Comment as ${user?.fullName}',
-                                                                      style: const TextStyle(
-                                                                        fontSize: 14.0,
-                                                                        color: Colors.grey,
+                                                                    TextField(
+                                                                      controller:
+                                                                          _commentController,
+                                                                      decoration: InputDecoration(
+                                                                        hintText:
+                                                                            'Comment as ${user?.fullName}',
+                                                                        hintStyle: TextStyle(
+                                                                            color: Colors.grey),
+                                                                        border: InputBorder.none,
                                                                       ),
                                                                     ),
                                                                   ],
                                                                 ),
                                                               ),
                                                             ),
+                                                            SizedBox(
+                                                              width: 10,
+                                                            ),
+                                                            ElevatedButton(
+                                                                onPressed: () => _addComment(post),
+                                                                child: Text('Add'))
                                                           ],
                                                         ),
                                                       ),

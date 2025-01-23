@@ -52,4 +52,24 @@ class PostProvider with ChangeNotifier {
       throw Exception('Error toggling like: $e');
     }
   }
+
+  Future<void> addComment(String postId, String userId, String fullName, String profileImage,
+      String commentContent) async {
+    try {
+      final newComment = {
+        'userId': userId,
+        'fullName': fullName,
+        'profileImage': profileImage,
+        'content': commentContent,
+        'createdAt': Timestamp.now(),
+      };
+
+      // Verkrijg de huidige post en voeg de nieuwe comment toe aan de lijst
+      await _firestoreService.addComment(postId, newComment);
+
+      notifyListeners();
+    } catch (e) {
+      throw Exception('Error adding comment: $e');
+    }
+  }
 }

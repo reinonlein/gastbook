@@ -13,7 +13,7 @@ class Post {
   final String visibility; // 'public' | 'friends' | 'interest'
   final Timestamp createdAt;
   final List<Map<String, dynamic>>
-      comments; // [{ commentId: string, authorId: string, fullName: string, profileImage: string, content: string, createdAt: timestamp }]
+      comments; // [{ commentId: string, userId: string, fullName: string, profileImage: string, content: string, createdAt: timestamp }]
 
   Post({
     required this.postId,
