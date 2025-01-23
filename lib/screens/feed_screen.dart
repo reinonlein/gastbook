@@ -268,7 +268,6 @@ class _FeedScreenState extends State<FeedScreen> {
                                                           color: isLiked ? Colors.red : Colors.grey,
                                                         ),
                                                         onPressed: () {
-                                                          print('klik');
                                                           postProvider.toggleLike(
                                                             post.postId,
                                                             user!.id,
