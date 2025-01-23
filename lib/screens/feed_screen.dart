@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../providers/auth_provider.dart';
 import '../providers/post_provider.dart';
+import '../models/post.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/sidebar.dart';
 import 'profile_screen.dart';
@@ -19,7 +19,6 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> {
   final TextEditingController _postController = TextEditingController();
   bool _isLoading = false;
-  bool _showOwnPostsOnly = false;
 
   // Functie om een nieuwe post toe te voegen
   Future<void> _addPost(BuildContext bottomSheetContext) async {
@@ -30,12 +29,11 @@ class _FeedScreenState extends State<FeedScreen> {
     });
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userId = authProvider.user?.uid;
-    final fullName = authProvider.userData?['fullName'];
+    final user = authProvider.user;
 
     try {
       final postProvider = Provider.of<PostProvider>(context, listen: false);
-      await postProvider.addPost(_postController.text.trim(), userId!, fullName);
+      await postProvider.addPost(_postController.text.trim(), user!.id, user.fullName);
 
       _postController.clear(); // Maak het invoerveld leeg na het posten
 
@@ -92,7 +90,7 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final postProvider = Provider.of<PostProvider>(context);
-    final userId = authProvider.user?.uid;
+    final user = authProvider.user;
 
     double screenWidth = MediaQuery.of(context).size.width;
 
@@ -125,30 +123,9 @@ class _FeedScreenState extends State<FeedScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Text("Show my posts only: "),
-                      Switch(
-                        value: _showOwnPostsOnly,
-                        onChanged: (value) {
-                          setState(() {
-                            _showOwnPostsOnly = value;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
                   Expanded(
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: _showOwnPostsOnly
-                          ? FirebaseFirestore.instance
-                              .collection('posts')
-                              .where('userId', isEqualTo: userId)
-                              .orderBy('createdAt', descending: true)
-                              .snapshots()
-                          : postProvider.posts,
+                    child: StreamBuilder<List<Post>>(
+                      stream: postProvider.posts,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator());
@@ -158,23 +135,18 @@ class _FeedScreenState extends State<FeedScreen> {
                           return Center(child: Text('Error: ${snapshot.error}'));
                         }
 
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return const Center(child: Text('No posts available.'));
                         }
 
-                        final posts = snapshot.data!.docs;
+                        final posts = snapshot.data!;
                         return ListView.builder(
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
-                            // Maak een mutable Map van de post
-                            final postSnapshot = posts[index];
-                            final post = postSnapshot.data() as Map<String, dynamic>;
-                            post['id'] = postSnapshot.id;
-
-                            final isLiked = (post['likes'] as List<dynamic>)
-                                .any((like) => like['userId'] == userId);
-                            final likeCount = (post['likes'] as List<dynamic>).length;
-                            final commentCount = (post['comments'] as List<dynamic>).length;
+                            final post = posts[index];
+                            final isLiked = post.likes.any((like) => like['userId'] == user!.id);
+                            final likeCount = post.likes.length;
+                            final commentCount = post.comments.length;
 
                             return Center(
                               child: ConstrainedBox(
@@ -191,9 +163,14 @@ class _FeedScreenState extends State<FeedScreen> {
                                         children: [
                                           Row(
                                             children: [
-                                              const CircleAvatar(
+                                              CircleAvatar(
                                                 radius: 16,
-                                                child: Icon(Icons.person, size: 18),
+                                                backgroundImage: post.profileImage != ''
+                                                    ? NetworkImage(post.profileImage)
+                                                    : null,
+                                                child: post.profileImage == ''
+                                                    ? const Icon(Icons.person, size: 18)
+                                                    : null,
                                               ),
                                               const SizedBox(width: 12),
                                               Column(
@@ -205,13 +182,13 @@ class _FeedScreenState extends State<FeedScreen> {
                                                         context,
                                                         MaterialPageRoute(
                                                           builder: (context) => ProfileScreen(
-                                                            userId: post['userId'],
+                                                            userId: post.userId,
                                                           ),
                                                         ),
                                                       );
                                                     },
                                                     child: Text(
-                                                      post['fullName'],
+                                                      post.fullName,
                                                       style: TextStyle(
                                                         color: Theme.of(context).primaryColor,
                                                         fontWeight: FontWeight.bold,
@@ -220,11 +197,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                                     ),
                                                   ),
                                                   Text(
-                                                    post['createdAt'] != null
-                                                        ? timeago.format(
-                                                            (post['createdAt'] as Timestamp)
-                                                                .toDate())
-                                                        : 'Unknown time',
+                                                    timeago.format(post.createdAt.toDate()),
                                                     style: const TextStyle(
                                                         fontSize: 12, color: Colors.grey),
                                                   ),
@@ -240,7 +213,7 @@ class _FeedScreenState extends State<FeedScreen> {
                                           Padding(
                                             padding: const EdgeInsets.fromLTRB(0, 25, 0, 12),
                                             child: Text(
-                                              post['content'],
+                                              post.content,
                                               style: const TextStyle(fontSize: 15),
                                             ),
                                           ),
@@ -261,7 +234,6 @@ class _FeedScreenState extends State<FeedScreen> {
                                               title: Row(
                                                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                                                 children: [
-                                                  // Toon het aantal likes
                                                   Row(
                                                     children: [
                                                       IconButton(
@@ -274,13 +246,10 @@ class _FeedScreenState extends State<FeedScreen> {
                                                         ),
                                                         onPressed: () {
                                                           postProvider.toggleLike(
-                                                            post['id'],
-                                                            userId!,
-                                                            authProvider.userData?['fullName'] ??
-                                                                '',
-                                                            authProvider
-                                                                    .userData?['profileImage'] ??
-                                                                '',
+                                                            post.postId,
+                                                            user!.id,
+                                                            user.fullName,
+                                                            user.profileImage,
                                                           );
                                                         },
                                                       ),
@@ -299,59 +268,111 @@ class _FeedScreenState extends State<FeedScreen> {
                                                 ],
                                               ),
                                               children: [
-                                                // Gebruik een Container om de commentaarlijst in te pakken
                                                 Container(
-                                                  padding: const EdgeInsets.all(8.0),
+                                                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                                                   child: Column(
                                                     children: [
-                                                      // Maak een lijst van de reacties
-                                                      for (var comment in post['comments'])
-                                                        ListTile(
-                                                          title: Text(comment['text']),
+                                                      for (var comment in post.comments)
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets.only(bottom: 14),
+                                                          child: Row(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment.start,
+                                                            children: [
+                                                              Padding(
+                                                                padding: const EdgeInsets.fromLTRB(
+                                                                    0, 5, 12, 0),
+                                                                child: const CircleAvatar(
+                                                                  radius: 14,
+                                                                  child:
+                                                                      Icon(Icons.person, size: 18),
+                                                                ),
+                                                              ),
+                                                              Container(
+                                                                padding: const EdgeInsets.symmetric(
+                                                                    horizontal: 15, vertical: 10),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.grey[50],
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(15.0),
+                                                                ),
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    Text(
+                                                                      comment['fullName'],
+                                                                      style: TextStyle(
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: 12,
+                                                                        letterSpacing: 0.7,
+                                                                        color: Theme.of(context)
+                                                                            .primaryColor,
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(height: 4.0),
+                                                                    Text(
+                                                                      comment['text'],
+                                                                      style: const TextStyle(
+                                                                        fontSize: 14.0,
+                                                                        color: Colors.black87,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
                                                         ),
+                                                      Padding(
+                                                        padding: const EdgeInsets.only(bottom: 14),
+                                                        child: Row(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment.start,
+                                                          children: [
+                                                            Padding(
+                                                              padding: const EdgeInsets.fromLTRB(
+                                                                  0, 5, 12, 0),
+                                                              child: const CircleAvatar(
+                                                                radius: 14,
+                                                                child: Icon(Icons.person, size: 18),
+                                                              ),
+                                                            ),
+                                                            Expanded(
+                                                              child: Container(
+                                                                padding: const EdgeInsets.symmetric(
+                                                                    horizontal: 15, vertical: 10),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.grey[50],
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(15.0),
+                                                                ),
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    const SizedBox(height: 4.0),
+                                                                    Text(
+                                                                      'Comment as ${user?.fullName}',
+                                                                      style: const TextStyle(
+                                                                        fontSize: 14.0,
+                                                                        color: Colors.grey,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
                                                     ],
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
-                                          // MANIER OM SHOW MORE COMMENTS TOE TE PASSEN
-                                          // if (commentCount > 0)
-                                          //   ListTile(
-                                          //     title: Text(post['comments'][0]['text']),
-                                          //   ),
-                                          // if (commentCount > 1)
-                                          //   Theme(
-                                          //     data: ThemeData(
-                                          //       dividerColor: Colors.transparent,
-                                          //       hoverColor: Colors.transparent,
-                                          //     ),
-                                          //     child: ExpansionTile(
-                                          //       tilePadding: EdgeInsets.zero,
-                                          //       trailing: SizedBox(),
-                                          //       title: TextButton(
-                                          //         onPressed: null,
-                                          //         child: Text(
-                                          //             'Show ${commentCount - 1} more comments'),
-                                          //       ),
-                                          //       children: [
-                                          //         // Gebruik een Container om de commentaarlijst in te pakken
-                                          //         Container(
-                                          //           padding: const EdgeInsets.all(8.0),
-                                          //           child: Column(
-                                          //             children: [
-                                          //               // Maak een lijst van de reacties
-                                          //               for (var comment
-                                          //                   in post['comments'].skip(1))
-                                          //                 ListTile(
-                                          //                   title: Text(comment['text']),
-                                          //                 ),
-                                          //             ],
-                                          //           ),
-                                          //         ),
-                                          //       ],
-                                          //     ),
-                                          //   ),
                                         ],
                                       ),
                                     ),

@@ -1,17 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/material.dart';
+import 'package:gastbook/models/user_data.dart';
 
 class AuthProvider with ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  User? _user;
-  Map<String, dynamic>? _userData;
+  firebase_auth.User? _firebaseUser;
+  UserData? _user;
   bool _isLoading = true;
 
-  User? get user => _user;
-  Map<String, dynamic>? get userData => _userData;
+  firebase_auth.User? get firebaseUser => _firebaseUser;
+  UserData? get user => _user;
   bool get isLoading => _isLoading;
 
   AuthProvider() {
@@ -24,29 +25,33 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _onAuthStateChanged(User? user) async {
-    _user = user;
-    if (_user != null) {
+  Future<void> _onAuthStateChanged(firebase_auth.User? user) async {
+    _firebaseUser = user;
+    if (_firebaseUser != null) {
       await _fetchUserData();
     } else {
-      _userData = null;
+      _user = null; // Bij geen ingelogde gebruiker, zet _user naar null
     }
     notifyListeners();
   }
 
   Future<void> _fetchUserData() async {
-    if (_user == null) return;
-    final doc = await _firestore.collection('users').doc(_user!.uid).get();
+    if (_firebaseUser == null) return;
+    final doc = await _firestore.collection('users').doc(_firebaseUser!.uid).get();
     if (doc.exists) {
-      _userData = doc.data();
+      _user = UserData.fromFirestore(doc.id, doc.data()!);
     } else {
-      _userData = {
-        'name': 'Unknown User',
-        'email': _user!.email ?? '',
-        'photoUrl': '',
-      };
+      _user = null; // Als de gebruiker niet bestaat in de Firestore, zet _user naar null
     }
     notifyListeners();
+  }
+
+  Future<UserData?> fetchUserById(String userId) async {
+    final doc = await _firestore.collection('users').doc(userId).get();
+    if (doc.exists) {
+      return UserData.fromFirestore(doc.id, doc.data()!); // Gebruik UserData in plaats van User
+    }
+    return null;
   }
 
   Future<void> signInWithEmailAndPassword(String email, String password) async {
@@ -84,23 +89,28 @@ class AuthProvider with ChangeNotifier {
 
       final fullName = '$firstName $lastName';
 
-      await _firestore.collection('users').doc(userId).set({
-        'username': userName,
-        'fullName': fullName,
-        'firstName': firstName,
-        'lastName': lastName,
-        'bio': '',
-        'profileImage': '',
-        'interests': [],
-        'friends': {},
-        'createdAt': Timestamp.now(),
-        'birthDate': null,
-        'email': email,
-      });
+      final newUser = UserData(
+        // Verander 'User' naar 'UserData'
+        id: userId,
+        username: userName,
+        fullName: fullName,
+        firstName: firstName,
+        lastName: lastName,
+        bio: '',
+        profileImage: '',
+        favoriteColor: '',
+        interests: [],
+        friends: {},
+        createdAt: Timestamp.now(),
+        birthDate: null,
+      );
 
-      _user = result.user;
-      await _fetchUserData();
-    } on FirebaseAuthException catch (e) {
+      await _firestore.collection('users').doc(userId).set(newUser.toMap());
+
+      _firebaseUser = result.user;
+      _user = newUser; // Zet _user naar de nieuwe gebruiker
+      notifyListeners();
+    } on firebase_auth.FirebaseAuthException catch (e) {
       throw Exception(getFriendlyAuthErrorMessage(e));
     } catch (e) {
       throw Exception('$e');
@@ -109,8 +119,8 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> signOut() async {
     await _auth.signOut();
+    _firebaseUser = null;
     _user = null;
-    _userData = null;
     notifyListeners();
   }
 
@@ -122,7 +132,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  String getFriendlyAuthErrorMessage(FirebaseAuthException e) {
+  String getFriendlyAuthErrorMessage(firebase_auth.FirebaseAuthException e) {
     switch (e.code) {
       case 'email-already-in-use':
         return 'This email address is already in use. Please try logging in or use a different email address.';

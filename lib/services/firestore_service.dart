@@ -1,54 +1,52 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/post.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  // Haal posts op
   Stream<QuerySnapshot> getPosts() {
-    return _firestore.collection('posts').orderBy('createdAt', descending: true).snapshots();
+    return _db.collection('posts').orderBy('createdAt', descending: true).snapshots();
   }
 
-  Future<void> addPost(String content, String userId, String fullName) async {
+  // Voeg een post toe
+  Future<void> addPost(Post post) async {
     try {
-      // Maak een nieuw document in de 'posts' collectie
-      DocumentReference postRef = await _firestore.collection('posts').add({
-        'content': content,
-        'userId': userId,
-        'fullName': fullName,
-        'profileImage': '', // Leeg veld voor nu, kan later worden ingevuld
-        'likes': [],
-        'comments': [],
-        'createdAt': Timestamp.now(),
-        'showComments':
-            false, // Je kunt een boolean toevoegen om te controleren of de comments zichtbaar zijn
-      });
-
-      // Na het toevoegen van de post, sla de document ID op in het document zelf
-      await postRef.update({'postId': postRef.id});
+      await _db.collection('posts').doc(post.postId).set(post.toMap());
     } catch (e) {
-      throw Exception('Error adding post: $e');
+      throw Exception('Error adding post to Firestore: $e');
     }
   }
 
+  // Toggle like voor een post
   Future<void> toggleLike(
       String postId, String userId, String fullName, String profileImage) async {
-    final postRef = _firestore.collection('posts').doc(postId);
+    final postRef = _db.collection('posts').doc(postId);
+    final postDoc = await postRef.get();
 
-    final snapshot = await postRef.get();
-    if (!snapshot.exists) return;
+    if (postDoc.exists) {
+      final postData = postDoc.data() as Map<String, dynamic>;
 
-    final post = snapshot.data()!;
-    final likes = List.from(post['likes'] ?? []);
+      List<Map<String, String>> likes = List<Map<String, String>>.from(postData['likes'] ?? []);
+      final userIndex = likes.indexWhere((like) => like['userId'] == userId);
 
-    if (likes.any((like) => like['userId'] == userId)) {
-      likes.removeWhere((like) => like['userId'] == userId);
-    } else {
-      likes.add({
-        'userId': userId,
-        'fullName': fullName,
-        'profileImage': profileImage,
+      if (userIndex == -1) {
+        // User has not liked the post, so we add the like
+        likes.add({
+          'userId': userId,
+          'fullName': fullName,
+          'profileImage': profileImage,
+        });
+      } else {
+        // User already liked the post, so we remove the like
+        likes.removeAt(userIndex);
+      }
+
+      await postRef.update({
+        'likes': likes,
       });
+    } else {
+      throw Exception('Post not found');
     }
-
-    await postRef.update({'likes': likes});
   }
 }

@@ -6,6 +6,7 @@ users (collectie)
   - lastName: string
   - bio: string
   - profileImage: string
+  - favoriteColor: string
   - interests: array<string>
   - friends: map<string, map>  // key: userId, value: map met 'fullName', 'profileImage' en 'status' ('friends', 'pending', 'requested')
   - createdAt: timestamp
@@ -17,7 +18,9 @@ usernames (collectie)
 
 posts (collectie)
 - postId (document-ID)
-  - authorId: string
+  - userId: string
+  - fullName: string
+  - profileImage: string
   - content: string
   - likes: array<map>  // { userId: string, fullName: string, profileImage: string }
   - commentsCount: number

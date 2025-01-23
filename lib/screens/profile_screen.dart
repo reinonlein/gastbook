@@ -1,7 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:gastbook/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
+import '../models/user_data.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/sidebar.dart';
 
@@ -12,12 +12,12 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final isCurrentUser = userId == null || userId == authProvider.user?.uid;
+    final isCurrentUser = userId == null || userId == authProvider.user?.id;
 
-    // Firestore query om gegevens van de gebruiker op te halen
-    final Future<dynamic> userFuture = isCurrentUser
-        ? Future.value(authProvider.userData) // Gebruik lokale data als het de huidige gebruiker is
-        : FirebaseFirestore.instance.collection('users').doc(userId).get();
+    // Future voor het ophalen van gebruikersdata
+    final Future<UserData?> userFuture = isCurrentUser
+        ? Future.value(authProvider.user) // Gebruik lokale data als het de huidige gebruiker is
+        : authProvider.fetchUserById(userId!); // Haal data op voor een andere gebruiker
 
     double screenWidth = MediaQuery.of(context).size.width;
 
@@ -47,7 +47,7 @@ class ProfileScreen extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: FutureBuilder(
+              child: FutureBuilder<UserData?>(
                 future: userFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -57,13 +57,10 @@ class ProfileScreen extends StatelessWidget {
                     return const Center(child: Text("User not found."));
                   }
 
-                  // Haal userData op uit de snapshot
-                  final userData = isCurrentUser
-                      ? snapshot.data as Map<String, dynamic>
-                      : (snapshot.data as DocumentSnapshot).data() as Map<String, dynamic>?;
+                  // Haal de `User` op uit de snapshot
+                  final user = snapshot.data;
 
-                  // Controleer of userData null is
-                  if (userData == null) {
+                  if (user == null) {
                     return const Center(child: Text("User data is unavailable."));
                   }
 
@@ -89,16 +86,16 @@ class ProfileScreen extends StatelessWidget {
                                           padding: const EdgeInsets.symmetric(horizontal: 30.0),
                                           child: CircleAvatar(
                                             radius: 60,
-                                            backgroundImage: userData['profileImage'] != ''
-                                                ? NetworkImage(userData['profileImage'])
+                                            backgroundImage: user.profileImage.isNotEmpty
+                                                ? NetworkImage(user.profileImage)
                                                 : null,
-                                            child: userData['profileImage'] == ''
+                                            child: user.profileImage.isEmpty
                                                 ? const Icon(Icons.person, size: 50)
                                                 : null,
                                           ),
                                         ),
                                         Text(
-                                          userData['fullName'] ?? 'Unknown User',
+                                          user.fullName,
                                           style: const TextStyle(
                                             fontSize: 24,
                                             fontWeight: FontWeight.bold,
@@ -122,141 +119,62 @@ class ProfileScreen extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
+                                    const Text(
                                       'About me',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    if (userData['bio'] != '')
+                                    if (user.bio.isNotEmpty)
                                       Text(
-                                        '${userData['bio']}',
+                                        user.bio,
                                         style: const TextStyle(fontSize: 15),
                                       ),
                                     const SizedBox(height: 8),
-                                    Text(
+                                    const Text(
                                       "Interests:",
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          // fontWeight: FontWeight.bold,
-                                          color: Colors.grey[500]),
+                                      style: TextStyle(fontSize: 15, color: Colors.grey),
                                     ),
-                                    if (userData['interests'] != null &&
-                                        userData['interests'].isNotEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const SizedBox(height: 8),
-                                            Wrap(
-                                              spacing: 10.0,
-                                              runSpacing: 4.0,
-                                              children:
-                                                  userData['interests'].map<Widget>((interest) {
-                                                return ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                    elevation: 0.7,
-                                                    minimumSize:
-                                                        Size(40, 30), // Kleinere afmetingen
-                                                    padding: EdgeInsets.symmetric(
-                                                      horizontal: 14,
-                                                      vertical: 4,
-                                                    ), // Geen extra binnenruimte
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(
-                                                          8), // Subtielere hoeken
-                                                    ),
-                                                  ),
-                                                  child: Text(
-                                                    interest,
-                                                    style: TextStyle(
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 12,
-                                                        letterSpacing: 1),
-                                                  ),
-                                                  onPressed: () {},
-                                                );
-                                                // return Chip(
-                                                //   label: Text(interest),
-                                                //   backgroundColor: Colors.grey[100],
-                                                //   labelStyle: TextStyle(
-                                                //     fontSize: 13,
-                                                //     fontWeight: FontWeight.bold,
-                                                //     letterSpacing: 0.7,
-                                                //     color: Colors.grey[500],
-                                                //   ),
-                                                //   padding: EdgeInsets.symmetric(
-                                                //       horizontal: 6.0, vertical: 0.0),
-                                                //   shape: RoundedRectangleBorder(
-                                                //     borderRadius: BorderRadius.circular(
-                                                //         50.0), // Minder ronde hoeken
-                                                //   ),
-                                                // );
-                                              }).toList(),
+                                    if (user.interests.isNotEmpty)
+                                      Wrap(
+                                        spacing: 10.0,
+                                        runSpacing: 4.0,
+                                        children: user.interests.map<Widget>((interest) {
+                                          return ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              elevation: 0.7,
+                                              minimumSize: const Size(40, 30),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 14,
+                                                vertical: 4,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
                                             ),
-                                          ],
-                                        ),
+                                            child: Text(
+                                              interest,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                  letterSpacing: 1),
+                                            ),
+                                            onPressed: () {},
+                                          );
+                                        }).toList(),
                                       ),
                                     const SizedBox(height: 8),
-                                    Text(
+                                    const Text(
                                       "Birthday:",
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          // fontWeight: FontWeight.bold,
-                                          color: Colors.grey[500]),
+                                      style: TextStyle(fontSize: 15, color: Colors.grey),
                                     ),
-                                    if (userData['birthDate'] != null)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                        child: Text(
-                                          userData['birthDate']
-                                              .toDate()
-                                              .toLocal()
-                                              .toString()
-                                              .split(' ')[0],
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.grey[500],
-                                          ),
-                                        ),
-                                      ),
-                                    const SizedBox(height: 16),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxHeight: 400, maxWidth: 750),
-                            child: Card(
-                              color: Colors.white,
-                              child: Container(
-                                padding: const EdgeInsets.all(30.0),
-                                width: double.infinity,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Friends',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    if (userData['friends'] != null)
+                                    if (user.birthDate != null)
                                       Text(
-                                        "${userData['friends'].length.toString()} friends",
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            // fontWeight: FontWeight.bold,
-                                            color: Colors.grey[500]),
+                                        user.birthDate!.toDate().toLocal().toString().split(' ')[0],
+                                        style: const TextStyle(fontSize: 15),
                                       ),
-                                    const SizedBox(height: 16),
                                   ],
                                 ),
                               ),
