@@ -19,6 +19,7 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> {
   final TextEditingController _postController = TextEditingController();
   final TextEditingController _commentController = TextEditingController();
+  final FocusNode _commentFocusNode = FocusNode(); // Toegevoegd focus node
   bool _isLoading = false;
 
   // Functie om een nieuwe post toe te voegen
@@ -71,6 +72,14 @@ class _FeedScreenState extends State<FeedScreen> {
         SnackBar(content: Text('Error adding comment: $e')),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _postController.dispose();
+    _commentController.dispose();
+    _commentFocusNode.dispose(); // FocusNode opruimen
+    super.dispose();
   }
 
   // BottomSheet openen
@@ -379,6 +388,8 @@ class _FeedScreenState extends State<FeedScreen> {
                                                                     TextField(
                                                                       controller:
                                                                           _commentController,
+                                                                      focusNode:
+                                                                          _commentFocusNode, // FocusNode toegevoegd
                                                                       decoration: InputDecoration(
                                                                         hintText:
                                                                             'Comment as ${user?.fullName}',
@@ -395,7 +406,16 @@ class _FeedScreenState extends State<FeedScreen> {
                                                               width: 10,
                                                             ),
                                                             ElevatedButton(
-                                                                onPressed: () => _addComment(post),
+                                                                onPressed: () {
+                                                                  // Zorg dat focus op het tekstveld komt
+                                                                  WidgetsBinding.instance
+                                                                      .addPostFrameCallback((_) {
+                                                                    FocusScope.of(context)
+                                                                        .requestFocus(
+                                                                            _commentFocusNode);
+                                                                  });
+                                                                  _addComment(post);
+                                                                },
                                                                 child: Text('Add'))
                                                           ],
                                                         ),
