@@ -221,7 +221,7 @@ class PostTile extends StatelessWidget {
                                 Expanded(
                                   child: Container(
                                     padding:
-                                        const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                        const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
                                     decoration: BoxDecoration(
                                       color: Colors.grey[50],
                                       borderRadius: BorderRadius.circular(15.0),
@@ -234,7 +234,10 @@ class PostTile extends StatelessWidget {
                                           controller: _commentController,
                                           decoration: InputDecoration(
                                             hintText: 'Comment as ${user?.fullName}',
-                                            hintStyle: TextStyle(color: Colors.grey),
+                                            hintStyle: TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 14,
+                                            ),
                                             border: InputBorder.none,
                                           ),
                                         ),
@@ -246,7 +249,13 @@ class PostTile extends StatelessWidget {
                                   width: 10,
                                 ),
                                 ElevatedButton(
-                                    onPressed: () => _addComment(post), child: Text('Add'))
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color.lerp(
+                                          Theme.of(context).primaryColor, Colors.white, 0.1),
+                                      foregroundColor: Colors.white),
+                                  onPressed: () => _addComment(post),
+                                  child: Text('Add'),
+                                )
                               ],
                             ),
                           ),

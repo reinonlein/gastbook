@@ -150,7 +150,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                       : ElevatedButton(
                                           onPressed: _addPost,
                                           style: ElevatedButton.styleFrom(
-                                              backgroundColor: Theme.of(context).primaryColor,
+                                              backgroundColor: Color.lerp(
+                                                  Theme.of(context).primaryColor,
+                                                  Colors.white,
+                                                  0.1),
                                               foregroundColor: Colors.white),
                                           child: const Text('Post'),
                                         ),
