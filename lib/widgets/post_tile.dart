@@ -138,19 +138,35 @@ class PostTile extends StatelessWidget {
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Row(
-                        children: [
-                          LikeButton(
-                            size: 17,
-                            likeCount: likeCount,
-                            isLiked: isLiked,
-                            onTap: onLikeButtonTapped,
-                          ),
-                        ],
-                      ),
                       Text(
                         '$commentCount ${commentCount == 1 ? 'Comment' : 'Comments'}',
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      LikeButton(
+                        size: 16,
+                        likeCount: likeCount,
+                        isLiked: isLiked,
+                        onTap: onLikeButtonTapped,
+                        countBuilder: (likeCount, isLiked, text) {
+                          return Text('${likeCount} ${likeCount == 1 ? 'like  ' : 'likes'}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ));
+                        },
+                        likeBuilder: (bool isLiked) {
+                          return isLiked
+                              ? Icon(
+                                  Icons.favorite,
+                                  color: Colors.redAccent,
+                                  size: 16,
+                                )
+                              : Icon(
+                                  Icons.favorite_outline_rounded,
+                                  color: Colors.grey[400],
+                                  size: 16,
+                                );
+                        },
                       ),
                     ],
                   ),
