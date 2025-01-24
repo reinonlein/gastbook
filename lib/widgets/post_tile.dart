@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gastbook/models/post.dart';
 import 'package:gastbook/providers/post_provider.dart';
+import 'package:like_button/like_button.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:gastbook/providers/auth_provider.dart';
 import 'package:gastbook/screens/profile_screen.dart';
@@ -44,6 +45,17 @@ class PostTile extends StatelessWidget {
           SnackBar(content: Text('Error adding comment: $e')),
         );
       }
+    }
+
+    Future<bool> onLikeButtonTapped(bool isLiked) async {
+      postProvider.toggleLike(
+        post.postId,
+        user!.id,
+        user.fullName,
+        user.profileImage,
+      );
+
+      return !isLiked;
     }
 
     // return Text(post.fullName);
@@ -128,24 +140,11 @@ class PostTile extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          IconButton(
-                            icon: Icon(
-                              size: 17,
-                              isLiked ? Icons.favorite : Icons.favorite_border,
-                              color: isLiked ? Colors.red : Colors.grey,
-                            ),
-                            onPressed: () {
-                              postProvider.toggleLike(
-                                post.postId,
-                                user!.id,
-                                user.fullName,
-                                user.profileImage,
-                              );
-                            },
-                          ),
-                          Text(
-                            '$likeCount ${likeCount == 1 ? 'Like' : 'Likes'}',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          LikeButton(
+                            size: 17,
+                            likeCount: likeCount,
+                            isLiked: isLiked,
+                            onTap: onLikeButtonTapped,
                           ),
                         ],
                       ),

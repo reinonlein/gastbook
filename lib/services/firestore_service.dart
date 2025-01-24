@@ -21,6 +21,8 @@ class FirestoreService {
   // Toggle like voor een post
   Future<void> toggleLike(
       String postId, String userId, String fullName, String profileImage) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+
     final postRef = _db.collection('posts').doc(postId);
     final postDoc = await postRef.get();
 
