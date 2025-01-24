@@ -40,6 +40,7 @@ dependencies:
   cloud_firestore: ^5.6.1
   firebase_analytics: ^11.4.0
   timeago: ^3.7.0
+  like_button: ^2.0.5
 
 dev_dependencies:
   flutter_test:

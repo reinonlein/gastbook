@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../screens/feed_screen.dart';
-import '../screens/profile_screen.dart';
-import '../screens/login_screen.dart';
+import 'package:gastbook/providers/auth_provider.dart';
+import 'package:gastbook/screens/feed_screen.dart';
+import 'package:gastbook/screens/profile_screen.dart';
+import 'package:gastbook/screens/login_screen.dart';
 
 class Sidebar extends StatelessWidget {
   const Sidebar({Key? key}) : super(key: key);
@@ -13,8 +13,8 @@ class Sidebar extends StatelessWidget {
       context,
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => page,
-        transitionDuration: Duration.zero, // Geen overgangsduur
-        reverseTransitionDuration: Duration.zero, // Geen overgangsduur bij teruggaan
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
       ),
     );
   }

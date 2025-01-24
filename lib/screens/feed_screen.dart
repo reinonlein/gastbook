@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:gastbook/screens/createpost_screen.dart';
 import 'package:gastbook/widgets/post_tile.dart';
 import 'package:provider/provider.dart';
-
-import '../providers/auth_provider.dart';
-import '../providers/post_provider.dart';
-import '../models/post.dart';
-import '../widgets/custom_drawer.dart';
-import '../widgets/sidebar.dart';
+import 'package:gastbook/providers/post_provider.dart';
+import 'package:gastbook/models/post.dart';
+import 'package:gastbook/widgets/custom_drawer.dart';
+import 'package:gastbook/widgets/sidebar.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({Key? key}) : super(key: key);
@@ -16,78 +15,20 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-  final TextEditingController _postController = TextEditingController();
-  bool _isLoading = false;
-
-  Future<void> _addPost(BuildContext bottomSheetContext) async {
-    if (_postController.text.isEmpty) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final user = authProvider.user;
-
-    try {
-      final postProvider = Provider.of<PostProvider>(context, listen: false);
-      await postProvider.addPost(_postController.text.trim(), user!.id, user.fullName);
-
-      _postController.clear(); // Maak het invoerveld leeg na het posten
-      Navigator.pop(bottomSheetContext); // Sluit de BottomSheet
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error adding post: $e')),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  // BottomSheet openen
-  void _openPostBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[50],
-      builder: (BuildContext bottomSheetContext) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              TextField(
-                controller: _postController,
-                decoration: const InputDecoration(
-                  hintText: 'What\'s on your mind?',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 8),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: () => _addPost(bottomSheetContext),
-                      child: const Text('Post'),
-                    ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+  void _navigateWithoutAnimation(BuildContext context, Widget page) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => page,
+        transitionDuration: Duration.zero, // Geen overgangsduur
+        reverseTransitionDuration: Duration.zero, // Geen overgangsduur bij teruggaan
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // final authProvider = Provider.of<AuthProvider>(context);
     final postProvider = Provider.of<PostProvider>(context);
-    // final user = authProvider.user;
 
     double screenWidth = MediaQuery.of(context).size.width;
     final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -159,7 +100,9 @@ class _FeedScreenState extends State<FeedScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _openPostBottomSheet,
+        onPressed: () {
+          _navigateWithoutAnimation(context, const CreatePostScreen());
+        },
         backgroundColor: Theme.of(context).primaryColor,
         child: const Icon(
           Icons.add,
