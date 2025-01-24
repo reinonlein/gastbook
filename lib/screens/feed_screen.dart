@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:gastbook/widgets/post_tile.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -20,7 +19,6 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> {
   final TextEditingController _postController = TextEditingController();
   final TextEditingController _commentController = TextEditingController();
-  final FocusNode _commentFocusNode = FocusNode(); // Toegevoegd focus node
   bool _isLoading = false;
 
   // Functie om een nieuwe post toe te voegen
@@ -73,14 +71,6 @@ class _FeedScreenState extends State<FeedScreen> {
         SnackBar(content: Text('Error adding comment: $e')),
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _postController.dispose();
-    _commentController.dispose();
-    _commentFocusNode.dispose(); // FocusNode opruimen
-    super.dispose();
   }
 
   // BottomSheet openen
@@ -178,292 +168,253 @@ class _FeedScreenState extends State<FeedScreen> {
                           itemBuilder: (context, index) {
                             final post = posts[index];
                             final isLiked = post.likes.any((like) => like['userId'] == user!.id);
+                            final likeCount = post.likes.length;
+                            final commentCount = post.comments.length;
 
-                            return PostTile(
-                              post: post,
-                              isLiked: isLiked,
-                              onLikeToggle: () {
-                                postProvider.toggleLike(
-                                  post.postId,
-                                  user!.id,
-                                  user.fullName,
-                                  user.profileImage,
-                                );
-                              },
-                              onAddComment: (post) {
-                                _addComment(post);
-                              },
-                              commentController:
-                                  _commentController, // Geef de commentController door
-                              commentFocusNode: _commentFocusNode, // Geef de focusNode door
-                              userFullName: user!.fullName, // Geef de gebruikersnaam door
+                            return Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 750),
+                                child: Card(
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  color: Colors.white,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(0.0),
+                                    child: ListTile(
+                                      contentPadding: const EdgeInsets.fromLTRB(25, 12, 25, 0),
+                                      title: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 16,
+                                                backgroundImage: post.profileImage != ''
+                                                    ? NetworkImage(post.profileImage)
+                                                    : null,
+                                                child: post.profileImage == ''
+                                                    ? const Icon(Icons.person, size: 18)
+                                                    : null,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) => ProfileScreen(
+                                                            userId: post.userId,
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                    child: Text(
+                                                      post.fullName,
+                                                      style: TextStyle(
+                                                        color: Theme.of(context).primaryColor,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    timeago.format(post.createdAt.toDate()),
+                                                    style: const TextStyle(
+                                                        fontSize: 12, color: Colors.grey),
+                                                  ),
+                                                ],
+                                              )
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(0, 25, 0, 12),
+                                            child: Text(
+                                              post.content,
+                                              style: const TextStyle(fontSize: 15),
+                                            ),
+                                          ),
+                                          Divider(
+                                            thickness: 0.7,
+                                            color: Colors.grey[200],
+                                          ),
+                                          Theme(
+                                            data: ThemeData(
+                                              dividerColor: Colors.transparent,
+                                              hoverColor: Colors.transparent,
+                                              splashColor: Colors.transparent,
+                                              highlightColor: Colors.transparent,
+                                            ),
+                                            child: ExpansionTile(
+                                              tilePadding: EdgeInsets.zero,
+                                              trailing: SizedBox(),
+                                              title: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      IconButton(
+                                                        icon: Icon(
+                                                          size: 17,
+                                                          isLiked
+                                                              ? Icons.favorite
+                                                              : Icons.favorite_border,
+                                                          color: isLiked ? Colors.red : Colors.grey,
+                                                        ),
+                                                        onPressed: () {
+                                                          postProvider.toggleLike(
+                                                            post.postId,
+                                                            user!.id,
+                                                            user.fullName,
+                                                            user.profileImage,
+                                                          );
+                                                        },
+                                                      ),
+                                                      Text(
+                                                        '$likeCount ${likeCount == 1 ? 'Like' : 'Likes'}',
+                                                        style: const TextStyle(
+                                                            fontSize: 12, color: Colors.grey),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Text(
+                                                    '$commentCount ${commentCount == 1 ? 'Comment' : 'Comments'}',
+                                                    style: const TextStyle(
+                                                        fontSize: 12, color: Colors.grey),
+                                                  ),
+                                                ],
+                                              ),
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                                                  child: Column(
+                                                    children: [
+                                                      for (var comment in post.comments)
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets.only(bottom: 14),
+                                                          child: Row(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment.start,
+                                                            children: [
+                                                              Padding(
+                                                                padding: const EdgeInsets.fromLTRB(
+                                                                    0, 5, 12, 0),
+                                                                child: const CircleAvatar(
+                                                                  radius: 14,
+                                                                  child:
+                                                                      Icon(Icons.person, size: 18),
+                                                                ),
+                                                              ),
+                                                              Container(
+                                                                padding: const EdgeInsets.symmetric(
+                                                                    horizontal: 15, vertical: 10),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.grey[50],
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(15.0),
+                                                                ),
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    Text(
+                                                                      comment['fullName'],
+                                                                      style: TextStyle(
+                                                                        fontWeight: FontWeight.bold,
+                                                                        fontSize: 12,
+                                                                        letterSpacing: 0.7,
+                                                                        color: Theme.of(context)
+                                                                            .primaryColor,
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(height: 4.0),
+                                                                    Text(
+                                                                      comment['content'],
+                                                                      style: const TextStyle(
+                                                                        fontSize: 14.0,
+                                                                        color: Colors.black87,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      Padding(
+                                                        padding: const EdgeInsets.only(bottom: 14),
+                                                        child: Row(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment.start,
+                                                          children: [
+                                                            Padding(
+                                                              padding: const EdgeInsets.fromLTRB(
+                                                                  0, 5, 12, 0),
+                                                              child: const CircleAvatar(
+                                                                radius: 14,
+                                                                child: Icon(Icons.person, size: 18),
+                                                              ),
+                                                            ),
+                                                            Expanded(
+                                                              child: Container(
+                                                                padding: const EdgeInsets.symmetric(
+                                                                    horizontal: 15, vertical: 10),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.grey[50],
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(15.0),
+                                                                ),
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    const SizedBox(height: 4.0),
+                                                                    TextField(
+                                                                      controller:
+                                                                          _commentController,
+                                                                      decoration: InputDecoration(
+                                                                        hintText:
+                                                                            'Comment as ${user?.fullName}',
+                                                                        hintStyle: TextStyle(
+                                                                            color: Colors.grey),
+                                                                        border: InputBorder.none,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            SizedBox(
+                                                              width: 10,
+                                                            ),
+                                                            ElevatedButton(
+                                                                onPressed: () => _addComment(post),
+                                                                child: Text('Add'))
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             );
                           },
                         );
-
-                        // return ListView.builder(
-                        //   itemCount: posts.length,
-                        //   itemBuilder: (context, index) {
-                        //     final post = posts[index];
-                        //     final isLiked = post.likes.any((like) => like['userId'] == user!.id);
-                        //     final likeCount = post.likes.length;
-                        //     final commentCount = post.comments.length;
-
-                        //     return Center(
-                        //       child: ConstrainedBox(
-                        //         constraints: const BoxConstraints(maxWidth: 750),
-                        //         child: Card(
-                        //           margin: const EdgeInsets.symmetric(vertical: 8),
-                        //           color: Colors.white,
-                        //           child: Padding(
-                        //             padding: const EdgeInsets.all(0.0),
-                        //             child: ListTile(
-                        //               contentPadding: const EdgeInsets.fromLTRB(25, 12, 25, 0),
-                        //               title: Column(
-                        //                 crossAxisAlignment: CrossAxisAlignment.start,
-                        //                 children: [
-                        //                   Row(
-                        //                     children: [
-                        //                       CircleAvatar(
-                        //                         radius: 16,
-                        //                         backgroundImage: post.profileImage != ''
-                        //                             ? NetworkImage(post.profileImage)
-                        //                             : null,
-                        //                         child: post.profileImage == ''
-                        //                             ? const Icon(Icons.person, size: 18)
-                        //                             : null,
-                        //                       ),
-                        //                       const SizedBox(width: 12),
-                        //                       Column(
-                        //                         crossAxisAlignment: CrossAxisAlignment.start,
-                        //                         children: [
-                        //                           GestureDetector(
-                        //                             onTap: () {
-                        //                               Navigator.push(
-                        //                                 context,
-                        //                                 MaterialPageRoute(
-                        //                                   builder: (context) => ProfileScreen(
-                        //                                     userId: post.userId,
-                        //                                   ),
-                        //                                 ),
-                        //                               );
-                        //                             },
-                        //                             child: Text(
-                        //                               post.fullName,
-                        //                               style: TextStyle(
-                        //                                 color: Theme.of(context).primaryColor,
-                        //                                 fontWeight: FontWeight.bold,
-                        //                                 fontSize: 14,
-                        //                               ),
-                        //                             ),
-                        //                           ),
-                        //                           Text(
-                        //                             timeago.format(post.createdAt.toDate()),
-                        //                             style: const TextStyle(
-                        //                                 fontSize: 12, color: Colors.grey),
-                        //                           ),
-                        //                         ],
-                        //                       )
-                        //                     ],
-                        //                   ),
-                        //                 ],
-                        //               ),
-                        //               subtitle: Column(
-                        //                 crossAxisAlignment: CrossAxisAlignment.start,
-                        //                 children: [
-                        //                   Padding(
-                        //                     padding: const EdgeInsets.fromLTRB(0, 25, 0, 12),
-                        //                     child: Text(
-                        //                       post.content,
-                        //                       style: const TextStyle(fontSize: 15),
-                        //                     ),
-                        //                   ),
-                        //                   Divider(
-                        //                     thickness: 0.7,
-                        //                     color: Colors.grey[200],
-                        //                   ),
-                        //                   Theme(
-                        //                     data: ThemeData(
-                        //                       dividerColor: Colors.transparent,
-                        //                       hoverColor: Colors.transparent,
-                        //                       splashColor: Colors.transparent,
-                        //                       highlightColor: Colors.transparent,
-                        //                     ),
-                        //                     child: ExpansionTile(
-                        //                       tilePadding: EdgeInsets.zero,
-                        //                       trailing: SizedBox(),
-                        //                       title: Row(
-                        //                         mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        //                         children: [
-                        //                           Row(
-                        //                             children: [
-                        //                               IconButton(
-                        //                                 icon: Icon(
-                        //                                   size: 17,
-                        //                                   isLiked
-                        //                                       ? Icons.favorite
-                        //                                       : Icons.favorite_border,
-                        //                                   color: isLiked ? Colors.red : Colors.grey,
-                        //                                 ),
-                        //                                 onPressed: () {
-                        //                                   postProvider.toggleLike(
-                        //                                     post.postId,
-                        //                                     user!.id,
-                        //                                     user.fullName,
-                        //                                     user.profileImage,
-                        //                                   );
-                        //                                 },
-                        //                               ),
-                        //                               Text(
-                        //                                 '$likeCount ${likeCount == 1 ? 'Like' : 'Likes'}',
-                        //                                 style: const TextStyle(
-                        //                                     fontSize: 12, color: Colors.grey),
-                        //                               ),
-                        //                             ],
-                        //                           ),
-                        //                           Text(
-                        //                             '$commentCount ${commentCount == 1 ? 'Comment' : 'Comments'}',
-                        //                             style: const TextStyle(
-                        //                                 fontSize: 12, color: Colors.grey),
-                        //                           ),
-                        //                         ],
-                        //                       ),
-                        //                       children: [
-                        //                         Container(
-                        //                           padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                        //                           child: Column(
-                        //                             children: [
-                        //                               for (var comment in post.comments)
-                        //                                 Padding(
-                        //                                   padding:
-                        //                                       const EdgeInsets.only(bottom: 14),
-                        //                                   child: Row(
-                        //                                     crossAxisAlignment:
-                        //                                         CrossAxisAlignment.start,
-                        //                                     children: [
-                        //                                       Padding(
-                        //                                         padding: const EdgeInsets.fromLTRB(
-                        //                                             0, 5, 12, 0),
-                        //                                         child: const CircleAvatar(
-                        //                                           radius: 14,
-                        //                                           child:
-                        //                                               Icon(Icons.person, size: 18),
-                        //                                         ),
-                        //                                       ),
-                        //                                       Container(
-                        //                                         padding: const EdgeInsets.symmetric(
-                        //                                             horizontal: 15, vertical: 10),
-                        //                                         decoration: BoxDecoration(
-                        //                                           color: Colors.grey[50],
-                        //                                           borderRadius:
-                        //                                               BorderRadius.circular(15.0),
-                        //                                         ),
-                        //                                         child: Column(
-                        //                                           crossAxisAlignment:
-                        //                                               CrossAxisAlignment.start,
-                        //                                           children: [
-                        //                                             Text(
-                        //                                               comment['fullName'],
-                        //                                               style: TextStyle(
-                        //                                                 fontWeight: FontWeight.bold,
-                        //                                                 fontSize: 12,
-                        //                                                 letterSpacing: 0.7,
-                        //                                                 color: Theme.of(context)
-                        //                                                     .primaryColor,
-                        //                                               ),
-                        //                                             ),
-                        //                                             const SizedBox(height: 4.0),
-                        //                                             Text(
-                        //                                               comment['content'],
-                        //                                               style: const TextStyle(
-                        //                                                 fontSize: 14.0,
-                        //                                                 color: Colors.black87,
-                        //                                               ),
-                        //                                             ),
-                        //                                           ],
-                        //                                         ),
-                        //                                       ),
-                        //                                     ],
-                        //                                   ),
-                        //                                 ),
-                        //                               Padding(
-                        //                                 padding: const EdgeInsets.only(bottom: 14),
-                        //                                 child: Row(
-                        //                                   crossAxisAlignment:
-                        //                                       CrossAxisAlignment.start,
-                        //                                   children: [
-                        //                                     Padding(
-                        //                                       padding: const EdgeInsets.fromLTRB(
-                        //                                           0, 5, 12, 0),
-                        //                                       child: const CircleAvatar(
-                        //                                         radius: 14,
-                        //                                         child: Icon(Icons.person, size: 18),
-                        //                                       ),
-                        //                                     ),
-                        //                                     Expanded(
-                        //                                       child: Container(
-                        //                                         padding: const EdgeInsets.symmetric(
-                        //                                             horizontal: 15, vertical: 10),
-                        //                                         decoration: BoxDecoration(
-                        //                                           color: Colors.grey[50],
-                        //                                           borderRadius:
-                        //                                               BorderRadius.circular(15.0),
-                        //                                         ),
-                        //                                         child: Column(
-                        //                                           crossAxisAlignment:
-                        //                                               CrossAxisAlignment.start,
-                        //                                           children: [
-                        //                                             const SizedBox(height: 4.0),
-                        //                                             TextField(
-                        //                                               controller:
-                        //                                                   _commentController,
-                        //                                               focusNode:
-                        //                                                   _commentFocusNode, // FocusNode toegevoegd
-                        //                                               decoration: InputDecoration(
-                        //                                                 hintText:
-                        //                                                     'Comment as ${user?.fullName}',
-                        //                                                 hintStyle: TextStyle(
-                        //                                                     color: Colors.grey),
-                        //                                                 border: InputBorder.none,
-                        //                                               ),
-                        //                                             ),
-                        //                                           ],
-                        //                                         ),
-                        //                                       ),
-                        //                                     ),
-                        //                                     SizedBox(
-                        //                                       width: 10,
-                        //                                     ),
-                        //                                     ElevatedButton(
-                        //                                         onPressed: () {
-                        //                                           // Zorg dat focus op het tekstveld komt
-                        //                                           WidgetsBinding.instance
-                        //                                               .addPostFrameCallback((_) {
-                        //                                             FocusScope.of(context)
-                        //                                                 .requestFocus(
-                        //                                                     _commentFocusNode);
-                        //                                           });
-                        //                                           _addComment(post);
-                        //                                         },
-                        //                                         child: Text('Add'))
-                        //                                   ],
-                        //                                 ),
-                        //                               ),
-                        //                             ],
-                        //                           ),
-                        //                         ),
-                        //                       ],
-                        //                     ),
-                        //                   ),
-                        //                 ],
-                        //               ),
-                        //             ),
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     );
-                        //   },
-                        // );
                       },
                     ),
                   ),
