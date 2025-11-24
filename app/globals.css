@@ -1,0 +1,107 @@
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Font family classes */
+.font-roboto {
+  font-family: var(--font-roboto), sans-serif;
+}
+
+.font-open-sans {
+  font-family: var(--font-open-sans), sans-serif;
+}
+
+.font-montserrat {
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+.font-albert-sans {
+  font-family: var(--font-albert-sans), sans-serif;
+}
+
+/* Apply font to body and all elements */
+body,
+body * {
+  font-family: var(--font-albert-sans), sans-serif;
+}
+
+html.font-roboto body,
+html.font-roboto body * {
+  font-family: var(--font-roboto), sans-serif;
+}
+
+html.font-open-sans body,
+html.font-open-sans body * {
+  font-family: var(--font-open-sans), sans-serif;
+}
+
+html.font-montserrat body,
+html.font-montserrat body * {
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+html.font-albert-sans body,
+html.font-albert-sans body * {
+  font-family: var(--font-albert-sans), sans-serif;
+}
+
+/* Ensure MUI components use the font */
+html.font-roboto .MuiTypography-root,
+html.font-roboto .MuiButton-root,
+html.font-roboto .MuiListItemText-primary,
+html.font-roboto .MuiListItemText-secondary,
+html.font-roboto .MuiInputBase-root,
+html.font-roboto .MuiChip-label {
+  font-family: var(--font-roboto), sans-serif !important;
+}
+
+html.font-open-sans .MuiTypography-root,
+html.font-open-sans .MuiButton-root,
+html.font-open-sans .MuiListItemText-primary,
+html.font-open-sans .MuiListItemText-secondary,
+html.font-open-sans .MuiInputBase-root,
+html.font-open-sans .MuiChip-label {
+  font-family: var(--font-open-sans), sans-serif !important;
+}
+
+html.font-montserrat .MuiTypography-root,
+html.font-montserrat .MuiButton-root,
+html.font-montserrat .MuiListItemText-primary,
+html.font-montserrat .MuiListItemText-secondary,
+html.font-montserrat .MuiInputBase-root,
+html.font-montserrat .MuiChip-label {
+  font-family: var(--font-montserrat), sans-serif !important;
+}
+
+html.font-albert-sans .MuiTypography-root,
+html.font-albert-sans .MuiButton-root,
+html.font-albert-sans .MuiListItemText-primary,
+html.font-albert-sans .MuiListItemText-secondary,
+html.font-albert-sans .MuiInputBase-root,
+html.font-albert-sans .MuiChip-label {
+  font-family: var(--font-albert-sans), sans-serif !important;
+}
+
