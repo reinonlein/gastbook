@@ -1,1 +1,35 @@
-hello world!
+This project will be a open source facebook clone. I want to build the frontend in Next.js and connect it to a backend in Supabase. I will deploy it to Vercel, and for styling I want to use MaterialUI. Please help me with laying out the basic foundation of this website.
+
+Minimal requirements (but please add if you think I forgot something):
+
+- the site has a sidebar left in screen
+- the site is built in Next.js using "next": "15.5.6", "next-pwa": "^5.6.0",
+- the site will include a progressive web app PWA
+- the site does not use Turbopack
+- the site connects with Supabase and hides any secure information in .env.local
+- the site is ready to connect to google analytics and vercel analytics
+- users can sign up, create a profile and log in
+- users can upload a profile picture
+- users can change their profile
+- users can change their profile picture, and when they do their new picture will be visible in all their posts (from before and after the change)
+- users can post updates on their own profile feeds
+- users can upload pictures to their profile page in an album, to include in posts
+- updates show the avatar of the user, their display name, and a relative date (eg. 2 days ago)
+- users can comment on posts
+- users can like posts and comments (max 1 time per post)
+- users can choose the visibility of their posts (anyone, friends only, etc)
+- there is a floating action button in the bottom right of the screen to a new post input field
+- users can attach photos's and weburls to their posts
+- users can connect with friends
+- users can send private messages to friends
+- users can create groups and invite people to join them
+- users can search available groups and send a request to join to the owner or moderators
+- users have an inbox with notification (for example to get noticed when they recieve a new friend request)
+- users have a home feed that shows the latest posts from friends by default, but users can choose to switch to latest public posts from non-friends instead
+- when scrolling down and the end of a post list is reached, the next posts are fetched in an infinite scroll
+
+Please create this in main steps:
+
+Step 1 - create the Next.js site and include the PWA
+Step 2 - tell me how to connect to Supabase, what to activate and what tables to create
+Step 3 - build the frontend on top of this schema architecture
