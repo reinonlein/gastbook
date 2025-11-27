@@ -31,12 +31,31 @@ export default function Home() {
       <PageLayout>
         <Container maxWidth="md" sx={{ py: 3 }}>
           <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h5">Home Feed</Typography>
             <ToggleButtonGroup
               value={feedType}
               exclusive
               onChange={handleFeedTypeChange}
               size="small"
+              sx={{
+                '& .MuiToggleButton-root': {
+                  px: 1.5,
+                  py: 0.5,
+                  fontSize: '0.75rem',
+                  textTransform: 'none',
+                  borderColor: 'divider',
+                  color: 'text.secondary',
+                  '&.Mui-selected': {
+                    color: 'primary.main',
+                    backgroundColor: 'rgba(76, 175, 80, 0.08)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(76, 175, 80, 0.12)',
+                    },
+                  },
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  },
+                },
+              }}
             >
               <ToggleButton value="friends">Friends</ToggleButton>
               <ToggleButton value="public">Public</ToggleButton>

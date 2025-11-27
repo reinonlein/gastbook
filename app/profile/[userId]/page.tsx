@@ -13,6 +13,8 @@ import {
   TextField,
   IconButton,
   Alert,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
@@ -44,6 +46,7 @@ export default function UserProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -278,12 +281,25 @@ export default function UserProfilePage() {
               </Box>
             </Paper>
 
-            <PhotoAlbums userId={userId} isOwnProfile={user?.id === userId} />
-
-            <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-              Posts
-            </Typography>
-            <PostFeed userId={userId} />
+            <Paper sx={{ mt: 3 }}>
+              <Tabs 
+                value={activeTab} 
+                onChange={(e, newValue) => setActiveTab(newValue)}
+                sx={{ 
+                  px: 3,
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                  }
+                }}
+              >
+                <Tab label="Posts" />
+                <Tab label="Photo Albums" />
+              </Tabs>
+              <Box sx={{ p: 3 }}>
+                {activeTab === 0 && <PostFeed userId={userId} />}
+                {activeTab === 1 && <PhotoAlbums userId={userId} isOwnProfile={user?.id === userId} />}
+              </Box>
+            </Paper>
           </Container>
       </PageLayout>
     </ProtectedRoute>

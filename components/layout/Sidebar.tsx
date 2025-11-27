@@ -214,46 +214,55 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps = {}
 
   // On desktop, show permanent drawer
   return (
-    <Drawer
-      variant="permanent"
+    <Box
       sx={{
         display: { xs: 'none', md: 'block' },
         width: drawerWidth,
         flexShrink: 0,
-        '& .MuiDrawer-paper': {
+      }}
+    >
+      <Drawer
+        variant="permanent"
+        sx={{
           width: drawerWidth,
-          boxSizing: 'border-box',
-          position: 'relative',
-          height: '100vh',
-          backgroundColor: 'background.paper',
-          color: 'primary.main',
-          '& .MuiListItemButton-root': {
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            height: '100vh',
+            backgroundColor: 'background.paper',
             color: 'primary.main',
-            '&:hover': {
-              backgroundColor: 'rgba(76, 175, 80, 0.08)',
-            },
-            '&.Mui-selected': {
-              backgroundColor: 'rgba(76, 175, 80, 0.12)',
+            '& .MuiListItemButton-root': {
+              color: 'primary.main',
               '&:hover': {
-                backgroundColor: 'rgba(76, 175, 80, 0.16)',
+                backgroundColor: 'rgba(76, 175, 80, 0.08)',
+              },
+              '&.Mui-selected': {
+                backgroundColor: 'rgba(76, 175, 80, 0.12)',
+                '&:hover': {
+                  backgroundColor: 'rgba(76, 175, 80, 0.16)',
+                },
               },
             },
+            '& .MuiListItemIcon-root': {
+              color: 'primary.main',
+            },
+            '& .MuiDivider-root': {
+              borderColor: 'rgba(0, 0, 0, 0.12)',
+            },
+            '& .MuiListItemText-primary': {
+              color: 'text.primary',
+            },
           },
-          '& .MuiListItemIcon-root': {
-            color: 'primary.main',
-          },
-          '& .MuiDivider-root': {
-            borderColor: 'rgba(0, 0, 0, 0.12)',
-          },
-          '& .MuiListItemText-primary': {
-            color: 'text.primary',
-          },
-        },
-      }}
-      open
-    >
-      {drawer}
-    </Drawer>
+        }}
+        open
+      >
+        {drawer}
+      </Drawer>
+    </Box>
   );
 }
 
