@@ -25,13 +25,11 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import CommentIcon from '@mui/icons-material/Comment';
-import ShareIcon from '@mui/icons-material/Share';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CheckIcon from '@mui/icons-material/Check';
 import { formatDistanceToNow } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PostComments from './PostComments';
@@ -61,6 +59,7 @@ interface PostCardProps {
 
 export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [liked, setLiked] = useState(post.user_liked || false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [showComments, setShowComments] = useState(false);
@@ -68,10 +67,12 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [editVisibility, setEditVisibility] = useState(post.visibility);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   const isOwner = user?.id === post.user_id;
+
+  const handleProfileClick = () => {
+    router.push(`/profile/${post.user_id}`);
+  };
 
   const handleLike = async () => {
     if (!user) return;
@@ -153,59 +154,38 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
     }
   };
 
-  const handleShare = () => {
-    setShareDialogOpen(true);
-  };
-
-  const handleCopyLink = async () => {
-    const postUrl = `${window.location.origin}/posts/${post.id}`;
-    try {
-      await navigator.clipboard.writeText(postUrl);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch (error) {
-      console.error('Error copying link:', error);
-      alert('Failed to copy link');
-    }
-  };
-
-  const handleNativeShare = async () => {
-    const postUrl = `${window.location.origin}/posts/${post.id}`;
-    const shareData = {
-      title: `Post by ${post.profiles.display_name || 'User'}`,
-      text: post.content.substring(0, 100) + (post.content.length > 100 ? '...' : ''),
-      url: postUrl,
-    };
-
-    try {
-      if (navigator.share && navigator.canShare(shareData)) {
-        await navigator.share(shareData);
-      } else {
-        handleCopyLink();
-      }
-    } catch (error: any) {
-      // User cancelled or error occurred
-      if (error.name !== 'AbortError') {
-        console.error('Error sharing:', error);
-        handleCopyLink();
-      }
-    }
-  };
 
   return (
     <>
-      <Card sx={{ mb: 2 }}>
+      <Card sx={{ mb: 2, borderRadius: 3 }}>
         <CardHeader
           avatar={
-            <Avatar src={post.profiles.avatar_url || undefined}>
+            <Avatar 
+              src={post.profiles.avatar_url || undefined}
+              sx={{ cursor: 'pointer' }}
+              onClick={handleProfileClick}
+            >
               {post.profiles.display_name?.[0]?.toUpperCase() || 'U'}
             </Avatar>
           }
-          title={post.profiles.display_name || 'Unknown User'}
+          title={
+            <Typography 
+              variant="subtitle2" 
+              sx={{ cursor: 'pointer', color: 'primary.main', fontWeight: 600 }}
+              onClick={handleProfileClick}
+            >
+              {post.profiles.display_name || 'Unknown User'}
+            </Typography>
+          }
           subheader={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
           action={
             isOwner && (
               <>
+                <Chip
+                  label={post.visibility}
+                  size="small"
+                  color={post.visibility === 'public' ? 'primary' : 'default'}
+                />
                 <IconButton onClick={handleMenuOpen}>
                   <MoreVertIcon />
                 </IconButton>
@@ -226,40 +206,30 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
           }
         />
         <CardContent>
-          <Box sx={{ mb: 1 }}>
-            <Chip
-              label={post.visibility}
-              size="small"
-              color={post.visibility === 'public' ? 'primary' : 'default'}
-            />
-          </Box>
           <Typography variant="body1" sx={{ mb: 2, whiteSpace: 'pre-wrap' }}>
             {post.content}
           </Typography>
           <PostAttachments postId={post.id} />
-          <Box sx={{ display: 'flex', gap: 2, mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Box sx={{ display: 'flex', gap: 1, mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
             <IconButton
               onClick={handleLike}
               color={liked ? 'error' : 'default'}
               size="small"
             >
-              {liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+              {liked ? <FavoriteIcon /> : <FavoriteBorderIcon sx={{ color: 'rgba(0, 0, 0, 0.25)' }} />}
             </IconButton>
             <Typography variant="body2" sx={{ alignSelf: 'center' }}>
               {likesCount}
             </Typography>
-            <IconButton
+            <IconButton sx={{ml: 5}}
               onClick={() => setShowComments(!showComments)}
               size="small"
             >
-              <CommentIcon />
+              <CommentIcon sx={{ color: 'rgba(0, 0, 0, 0.25)' }} />
             </IconButton>
             <Typography variant="body2" sx={{ alignSelf: 'center' }}>
               {post.comments_count || 0}
             </Typography>
-            <IconButton size="small" onClick={handleShare}>
-              <ShareIcon />
-            </IconButton>
           </Box>
           {showComments && <PostComments postId={post.id} />}
         </CardContent>
@@ -294,45 +264,6 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
           <Button onClick={handleSaveEdit} variant="contained">
             Save
           </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={shareDialogOpen} onClose={() => setShareDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Share Post</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              value={`${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`}
-              label="Post Link"
-              InputProps={{
-                readOnly: true,
-              }}
-            />
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="contained"
-              startIcon={linkCopied ? <CheckIcon /> : <ContentCopyIcon />}
-              onClick={handleCopyLink}
-              fullWidth
-            >
-              {linkCopied ? 'Copied!' : 'Copy Link'}
-            </Button>
-            {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
-              <Button
-                variant="outlined"
-                startIcon={<ShareIcon />}
-                onClick={handleNativeShare}
-                fullWidth
-              >
-                Share
-              </Button>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShareDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </>

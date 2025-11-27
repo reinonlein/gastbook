@@ -10,7 +10,7 @@ import {
   Paper,
   IconButton,
 } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
+import AddIcon from '@mui/icons-material/Add';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { formatDistanceToNow } from 'date-fns';
@@ -234,14 +234,24 @@ export default function PostComments({ postId }: PostCommentsProps) {
             onChange={(e) => setNewComment(e.target.value)}
             InputProps={{
               endAdornment: (
-                <Button
+                <IconButton
                   type="submit"
                   size="small"
-                  variant="contained"
                   disabled={!newComment.trim()}
+                  sx={{
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                    },
+                    '&.Mui-disabled': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                      color: 'rgba(0, 0, 0, 0.26)',
+                    },
+                  }}
                 >
-                  <SendIcon />
-                </Button>
+                  <AddIcon />
+                </IconButton>
               ),
             }}
           />
