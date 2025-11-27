@@ -30,7 +30,7 @@ export default function Home() {
     <ProtectedRoute>
       <PageLayout>
         <Container maxWidth="md" sx={{ py: 3 }}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <ToggleButtonGroup
               value={feedType}
               exclusive

@@ -25,6 +25,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import PageLayout from '@/components/layout/PageLayout';
 import PostFeed from '@/components/posts/PostFeed';
 import PhotoAlbums from '@/components/profile/PhotoAlbums';
+import FriendsList from '@/components/profile/FriendsList';
 
 interface Profile {
   id: string;
@@ -47,6 +48,7 @@ export default function UserProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [friendsCount, setFriendsCount] = useState<number>(0);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -73,6 +75,48 @@ export default function UserProfilePage() {
       fetchProfile();
     }
   }, [userId, fetchProfile]);
+
+  const fetchFriendsCount = useCallback(async () => {
+    try {
+      // Get accepted friends where user_id = userId
+      const { data: friendsData1 } = await supabase
+        .from('friends')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'accepted');
+
+      // Get accepted friends where friend_id = userId
+      const { data: friendsData2 } = await supabase
+        .from('friends')
+        .select('id')
+        .eq('friend_id', userId)
+        .eq('status', 'accepted');
+
+      const count = (friendsData1?.length || 0) + (friendsData2?.length || 0);
+      setFriendsCount(count);
+    } catch (error) {
+      console.error('Error fetching friends count:', error);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchFriendsCount();
+    }
+
+    // Listen for custom event when friends are updated
+    const handleFriendsUpdate = () => {
+      setTimeout(() => {
+        fetchFriendsCount();
+      }, 100);
+    };
+
+    window.addEventListener('friendsUpdated', handleFriendsUpdate);
+
+    return () => {
+      window.removeEventListener('friendsUpdated', handleFriendsUpdate);
+    };
+  }, [userId, fetchFriendsCount]);
 
   const handleEdit = () => {
     setEditing(true);
@@ -294,10 +338,12 @@ export default function UserProfilePage() {
               >
                 <Tab label="Posts" />
                 <Tab label="Photo Albums" />
+                <Tab label={`Friends${friendsCount > 0 ? ` (${friendsCount})` : ''}`} />
               </Tabs>
               <Box sx={{ p: 3 }}>
                 {activeTab === 0 && <PostFeed userId={userId} />}
                 {activeTab === 1 && <PhotoAlbums userId={userId} isOwnProfile={user?.id === userId} />}
+                {activeTab === 2 && <FriendsList userId={userId} />}
               </Box>
             </Paper>
           </Container>

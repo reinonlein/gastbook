@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   TextField,
@@ -9,6 +10,7 @@ import {
   ListItemButton,
   ListItemAvatar,
   ListItemText,
+  ListItemSecondaryAction,
   Avatar,
   Button,
   Paper,
@@ -16,6 +18,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
+import FriendRequestButton from '@/components/profile/FriendRequestButton';
 
 interface User {
   id: string;
@@ -25,10 +28,13 @@ interface User {
 
 interface UserSearchProps {
   onUserSelect?: (userId: string) => void;
+  onRequestSent?: () => void;
+  onRequestCanceled?: () => void;
 }
 
-export default function UserSearch({ onUserSelect }: UserSearchProps) {
+export default function UserSearch({ onUserSelect, onRequestSent, onRequestCanceled }: UserSearchProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,12 +84,24 @@ export default function UserSearch({ onUserSelect }: UserSearchProps) {
         <Paper sx={{ mt: 1, maxHeight: 300, overflow: 'auto' }}>
           <List>
             {results.map((result) => (
-              <ListItem key={result.id} disablePadding>
+              <ListItem 
+                key={result.id} 
+                disablePadding
+                secondaryAction={
+                  <Box onClick={(e) => e.stopPropagation()}>
+                    <FriendRequestButton 
+                      targetUserId={result.id} 
+                      size="small" 
+                      variant="outlined"
+                      onRequestSent={onRequestSent}
+                      onRequestCanceled={onRequestCanceled}
+                    />
+                  </Box>
+                }
+              >
                 <ListItemButton
                   onClick={() => {
-                    if (onUserSelect) {
-                      onUserSelect(result.id);
-                    }
+                    router.push(`/profile/${result.id}`);
                     setSearchTerm('');
                     setResults([]);
                   }}

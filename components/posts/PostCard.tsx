@@ -34,6 +34,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PostComments from './PostComments';
 import PostAttachments from './PostAttachments';
+import FriendRequestButton from '@/components/profile/FriendRequestButton';
 
 interface Post {
   id: string;
@@ -179,30 +180,34 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
           }
           subheader={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
           action={
-            isOwner && (
-              <>
-                <Chip
-                  label={post.visibility}
-                  size="small"
-                  color={post.visibility === 'public' ? 'primary' : 'default'}
-                />
-                <IconButton onClick={handleMenuOpen}>
-                  <MoreVertIcon />
-                </IconButton>
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl)}
-                  onClose={handleMenuClose}
-                >
-                  <MenuItem onClick={handleEdit}>
-                    <EditIcon sx={{ mr: 1 }} /> Edit
-                  </MenuItem>
-                  <MenuItem onClick={handleDelete}>
-                    <DeleteIcon sx={{ mr: 1 }} /> Delete
-                  </MenuItem>
-                </Menu>
-              </>
-            )
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {isOwner ? (
+                <>
+                  <Chip
+                    label={post.visibility}
+                    size="small"
+                    color={post.visibility === 'public' ? 'primary' : 'default'}
+                  />
+                  <IconButton onClick={handleMenuOpen}>
+                    <MoreVertIcon />
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                  >
+                    <MenuItem onClick={handleEdit}>
+                      <EditIcon sx={{ mr: 1 }} /> Edit
+                    </MenuItem>
+                    <MenuItem onClick={handleDelete}>
+                      <DeleteIcon sx={{ mr: 1 }} /> Delete
+                    </MenuItem>
+                  </Menu>
+                </>
+              ) : (
+                <FriendRequestButton targetUserId={post.user_id} size="small" variant="outlined" />
+              )}
+            </Box>
           }
         />
         <CardContent>
