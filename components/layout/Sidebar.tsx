@@ -73,18 +73,49 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps = {}
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ pt: 7, pb:1.5, px: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Typography variant="h4" sx={{ color: 'white', fontWeight: 600 }}>
+      <Box 
+        sx={{ 
+          pt: 2, 
+          pb: 1.5, 
+          px: 2, 
+          display: { xs: 'none', md: 'flex' }, 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          backgroundColor: { xs: 'transparent', md: 'primary.main' },
+        }}
+      >
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            color: { xs: 'primary.main', md: 'white' }, 
+            fontWeight: 600 
+          }}
+        >
           Gastbook
         </Typography>
       </Box>
       {user && (
         <>
-          <Box sx={{ px: 2, pb: 7, display: 'flex', justifyContent: 'center', alignItems: 'center', gap:1 }}>
+          <Box 
+            sx={{ 
+              px: 2, 
+              pb: 2, 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: 1,
+              backgroundColor: { xs: 'transparent', md: 'primary.main' },
+            }}
+          >
             <Avatar src={profile?.avatar_url || undefined}>
               {profile?.display_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
             </Avatar>
-            <Typography variant="body2" sx={{ color: 'white' }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: { xs: 'primary.main', md: 'white' } 
+              }}
+            >
               {profile?.display_name || 'User'}
             </Typography>
           </Box>
@@ -104,7 +135,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps = {}
                 }
               }}
             >
-              <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>
+              <ListItemIcon sx={{ color: 'primary.main' }}>{item.icon}</ListItemIcon>
               <ListItemText primary={item.text} />
             </ListItemButton>
           </ListItem>
@@ -123,7 +154,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps = {}
                   }
                 }}
               >
-                <ListItemIcon sx={{ color: 'white' }}>
+                <ListItemIcon sx={{ color: 'primary.main' }}>
                   <LogoutIcon />
                 </ListItemIcon>
                 <ListItemText primary="Logout" />
@@ -150,28 +181,28 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps = {}
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,
-            backgroundColor: 'primary.main',
-            color: 'white',
+            backgroundColor: 'background.paper',
+            color: 'primary.main',
             '& .MuiListItemButton-root': {
-              color: 'white',
+              color: 'primary.main',
               '&:hover': {
-                backgroundColor: 'primary.dark',
+                backgroundColor: 'rgba(76, 175, 80, 0.08)',
               },
               '&.Mui-selected': {
-                backgroundColor: 'primary.dark',
+                backgroundColor: 'rgba(76, 175, 80, 0.12)',
                 '&:hover': {
-                  backgroundColor: 'primary.dark',
+                  backgroundColor: 'rgba(76, 175, 80, 0.16)',
                 },
               },
             },
             '& .MuiListItemIcon-root': {
-              color: 'white',
+              color: 'primary.main',
             },
             '& .MuiDivider-root': {
-              borderColor: 'rgba(255, 255, 255, 0.2)',
+              borderColor: 'rgba(0, 0, 0, 0.12)',
             },
-            '& .MuiTypography-root': {
-              color: 'white',
+            '& .MuiListItemText-primary': {
+              color: 'text.primary',
             },
           },
         }}
@@ -194,28 +225,28 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps = {}
           boxSizing: 'border-box',
           position: 'relative',
           height: '100vh',
-          backgroundColor: 'primary.main',
-          color: 'white',
+          backgroundColor: 'background.paper',
+          color: 'primary.main',
           '& .MuiListItemButton-root': {
-            color: 'white',
+            color: 'primary.main',
             '&:hover': {
-              backgroundColor: 'primary.dark',
+              backgroundColor: 'rgba(76, 175, 80, 0.08)',
             },
             '&.Mui-selected': {
-              backgroundColor: 'primary.dark',
+              backgroundColor: 'rgba(76, 175, 80, 0.12)',
               '&:hover': {
-                backgroundColor: 'primary.dark',
+                backgroundColor: 'rgba(76, 175, 80, 0.16)',
               },
             },
           },
           '& .MuiListItemIcon-root': {
-            color: 'white',
+            color: 'primary.main',
           },
           '& .MuiDivider-root': {
-            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderColor: 'rgba(0, 0, 0, 0.12)',
           },
-          '& .MuiTypography-root': {
-            color: 'white',
+          '& .MuiListItemText-primary': {
+            color: 'text.primary',
           },
         },
       }}
